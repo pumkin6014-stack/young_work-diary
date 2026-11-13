@@ -73,7 +73,7 @@
             <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0">
                 <div class="flex items-center gap-3">
                     <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
-                    <!-- 검색 기능 (전체 기간 대상) -->
+                    <!-- 검색 기능 -->
                     <div class="relative">
                         <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="전체 기간 내용 검색..." class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 pl-8 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-40 sm:w-56">
                         <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
@@ -152,16 +152,23 @@
         </div>
     </div>
 
-    <!-- 날짜 셀 우클릭 컨텍스트 메뉴 (복사 기능 추가) -->
-    <div id="date-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-44 text-xs">
+    <!-- 날짜 셀 우클릭 컨텍스트 메뉴 -->
+    <div id="date-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-48 text-xs">
         <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">날짜 메뉴</div>
-        <button onclick="copyDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 이 날짜 내용 복사</button>
-        <button onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-indigo-600 font-medium flex items-center gap-2"><span>📌</span> 여기에 붙여넣기</button>
+        <button onclick="copyDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 날짜 전체 내용 복사</button>
+        <button onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-indigo-600 font-medium flex items-center gap-2"><span>📌</span> 날짜 전체 붙여넣기</button>
+        <div class="border-t border-slate-100 my-1"></div>
+        <button onclick="pasteTodoContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-emerald-600 font-medium flex items-center gap-2"><span>📌</span> 복사된 할 일만 붙여넣기</button>
     </div>
 
-    <!-- 할 일 항목 우클릭 컨텍스트 메뉴 -->
-    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-44 text-xs">
-        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">일정 유형 설정</div>
+    <!-- 할 일 항목 우클릭 컨텍스트 메뉴 (개별 할 일 복사 기능 추가) -->
+    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-48 text-xs">
+        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">할 일 설정 및 복사</div>
+        <button onclick="copySingleTodo()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 이 할 일만 복사</button>
+        <button onclick="pasteTodoContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-indigo-600 font-medium flex items-center gap-2"><span>📌</span> 여기에 할 일 붙여넣기</button>
+        <div class="border-t border-slate-100 my-1"></div>
+        <button onclick="copyDateContentFromTodo()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-500 font-medium flex items-center gap-2"><span>📋</span> 날짜 전체 내용 복사</button>
+        <div class="border-t border-slate-100 my-1"></div>
         <button onclick="applyContextMenuColor('bg-rose-50 text-rose-700 border-rose-200')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 font-medium flex items-center gap-2"><span>🔴</span> 회의 & 교육</button>
         <button onclick="applyContextMenuColor('bg-amber-50 text-amber-700 border-amber-200')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 font-medium flex items-center gap-2"><span>🟡</span> 업무 요청</button>
         <button onclick="applyContextMenuColor('bg-emerald-50 text-emerald-700 border-emerald-200')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 font-medium flex items-center gap-2"><span>🟢</span> 공지</button>
@@ -181,7 +188,8 @@
         let searchQuery = '';
         
         let contextTarget = null;
-        let copiedData = null; // 복사된 데이터 임시 저장
+        let copiedDateData = null; // 날짜 전체 복사본
+        let copiedTodoItem = null; // 개별 할 일 복사본
         let activeDateMenuKey = null;
         
         const canvas = document.getElementById('drawing-canvas');
@@ -284,7 +292,6 @@
                     <div class="grid grid-cols-7 gap-[1px] bg-slate-200">
             `;
 
-            // 이전달 여백 날짜들 (활성화됨)
             const prevMonth = month === 0 ? 11 : month - 1;
             const prevYear = month === 0 ? year - 1 : year;
             for (let i = firstDayIndex - 1; i >= 0; i--) {
@@ -293,13 +300,11 @@
                 html += createMonthlyCellHTML(prevYear, prevMonth, day, dateKey, false);
             }
 
-            // 이번달 날짜들
             for (let day = 1; day <= totalDays; day++) {
                 const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 html += createMonthlyCellHTML(year, month, day, dateKey, true);
             }
 
-            // 다음달 여백 날짜들 (활성화됨)
             const totalCells = firstDayIndex + totalDays;
             const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
             const nextMonth = month === 11 ? 0 : month + 1;
@@ -585,13 +590,11 @@
         function goToToday() { currentDate = new Date(); renderView(); }
         function handleEnter(e, dateKey) { if (e.key === 'Enter') addTodoItem(dateKey); }
         
-        // 검색 핸들러 (전체 기간 대상)
         function handleSearch(query) {
             searchQuery = query.trim().toLowerCase();
             loadTodos();
         }
         
-        // 태그 모달 관련
         function openTagModal(dateKey) { activeDateKey = dateKey; document.getElementById('tag-modal').classList.remove('hidden'); }
         function closeTagModal() { document.getElementById('tag-modal').classList.add('hidden'); activeDateKey = null; }
 
@@ -606,7 +609,6 @@
             loadTodos();
         }
 
-        // 휴가 모달 관련
         function openChefModal(dateKey) { activeDateKey = dateKey; document.getElementById('chef-vacation-modal').classList.remove('hidden'); }
         function closeChefModal() { document.getElementById('chef-vacation-modal').classList.add('hidden'); activeDateKey = null; }
 
@@ -687,7 +689,7 @@
                         itemDiv.addEventListener('contextmenu', (e) => {
                             e.stopPropagation();
                             e.preventDefault();
-                            openContextMenu(e, dateKey, item.id);
+                            openTodoContextMenu(e, dateKey, item.id);
                         });
 
                         itemDiv.innerHTML = `
@@ -746,7 +748,7 @@
             });
         }
 
-        // --- 날짜 우클릭 및 복사/붙여넣기 메뉴 ---
+        // --- 날짜 우클릭 메뉴 ---
         function openDateContextMenu(e, dateKey) {
             e.preventDefault();
             activeDateMenuKey = dateKey;
@@ -756,28 +758,77 @@
             menu.classList.remove('hidden');
         }
 
+        // --- 할 일 항목 우클릭 메뉴 ---
+        function openTodoContextMenu(e, dateKey, id) {
+            contextTarget = { dateKey, id };
+            activeDateMenuKey = dateKey;
+            const menu = document.getElementById('todo-context-menu');
+            menu.style.top = `${e.clientY}px`;
+            menu.style.left = `${e.clientX}px`;
+            menu.classList.remove('hidden');
+        }
+
+        // 개별 할 일 복사
+        function copySingleTodo() {
+            if (!contextTarget) return;
+            const { dateKey, id } = contextTarget;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                const target = data[dateKey].todos.find(t => t.id === id);
+                if (target) {
+                    copiedTodoItem = JSON.parse(JSON.stringify(target));
+                    alert(`"${target.text}" 할 일이 복사되었습니다!`);
+                }
+            }
+            document.getElementById('todo-context-menu').classList.add('hidden');
+        }
+
+        // 복사된 할 일 붙여넣기
+        function pasteTodoContent() {
+            if (!activeDateMenuKey || !copiedTodoItem) {
+                alert('복사된 할 일이 없습니다.');
+                return;
+            }
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (!data[activeDateMenuKey]) data[activeDateMenuKey] = { todos: [], tags: [], memo: '' };
+            if (!data[activeDateMenuKey].todos) data[activeDateMenuKey].todos = [];
+
+            // 새 아이디 부여하여 추가
+            const newTodo = { ...copiedTodoItem, id: Date.now() + Math.random() };
+            data[activeDateMenuKey].todos.push(newTodo);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            renderView();
+            document.getElementById('date-context-menu').classList.add('hidden');
+            document.getElementById('todo-context-menu').classList.add('hidden');
+        }
+
         function copyDateContent() {
             if (!activeDateMenuKey) return;
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            copiedData = data[activeDateMenuKey] ? JSON.parse(JSON.stringify(data[activeDateMenuKey])) : { todos: [], tags: [], memo: '' };
-            alert('해당 날짜의 내용이 복사되었습니다!');
+            copiedDateData = data[activeDateMenuKey] ? JSON.parse(JSON.stringify(data[activeDateMenuKey])) : { todos: [], tags: [], memo: '' };
+            alert('날짜 전체 내용이 복사되었습니다!');
             document.getElementById('date-context-menu').classList.add('hidden');
+            document.getElementById('todo-context-menu').classList.add('hidden');
+        }
+
+        function copyDateContentFromTodo() {
+            copyDateContent();
         }
 
         function pasteDateContent() {
-            if (!activeDateMenuKey || !copiedData) {
+            if (!activeDateMenuKey || !copiedDateData) {
                 alert('복사된 내용이 없습니다.');
                 return;
             }
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            data[activeDateMenuKey] = JSON.parse(JSON.stringify(copiedData));
-            // 새로운 아이디 재부여 (중복 방지)
+            data[activeDateMenuKey] = JSON.parse(JSON.stringify(copiedDateData));
             if (data[activeDateMenuKey].todos) {
                 data[activeDateMenuKey].todos = data[activeDateMenuKey].todos.map(t => ({...t, id: Date.now() + Math.random()}));
             }
             localStorage.setItem('sdm_data', JSON.stringify(data));
             renderView();
             document.getElementById('date-context-menu').classList.add('hidden');
+            document.getElementById('todo-context-menu').classList.add('hidden');
         }
 
         function allowDrop(e) { e.preventDefault(); }
@@ -802,14 +853,6 @@
 
             localStorage.setItem('sdm_data', JSON.stringify(data));
             loadTodos();
-        }
-
-        function openContextMenu(e, dateKey, id) {
-            contextTarget = { dateKey, id };
-            const menu = document.getElementById('todo-context-menu');
-            menu.style.top = `${e.clientY}px`;
-            menu.style.left = `${e.clientX}px`;
-            menu.classList.remove('hidden');
         }
 
         function applyContextMenuColor(styleClass) {
