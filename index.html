@@ -80,7 +80,7 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                     <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
                         <span id="current-date-title" class="text-sm font-bold text-slate-700">2026년 11월</span>
                         <div class="flex gap-1">
@@ -89,6 +89,12 @@
                         </div>
                     </div>
                     <button onclick="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-2xs">오늘</button>
+                    <!-- 기기 간 연동 버튼 그룹 -->
+                    <div class="flex items-center gap-1 border-l pl-2 border-slate-200">
+                        <button onclick="exportData()" class="px-2.5 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100" title="현재 다이어리 백업파일 다운로드">💾 내보내기</button>
+                        <button onclick="document.getElementById('import-file').click()" class="px-2.5 py-1.5 text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200 rounded-xl hover:bg-sky-100" title="백업파일 불러와서 동기화">📂 가져오기</button>
+                        <input type="file" id="import-file" accept=".json" onchange="importData(event)" class="hidden">
+                    </div>
                     <button onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hidden md:block">인쇄 / PDF</button>
                 </div>
             </header>
@@ -161,7 +167,7 @@
         <button onclick="pasteTodoContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-emerald-600 font-medium flex items-center gap-2"><span>📌</span> 복사된 할 일만 붙여넣기</button>
     </div>
 
-    <!-- 할 일 항목 우클릭 컨텍스트 메뉴 (개별 할 일 복사 기능 추가) -->
+    <!-- 할 일 항목 우클릭 컨텍스트 메뉴 -->
     <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-48 text-xs">
         <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">할 일 설정 및 복사</div>
         <button onclick="copySingleTodo()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 이 할 일만 복사</button>
@@ -188,8 +194,8 @@
         let searchQuery = '';
         
         let contextTarget = null;
-        let copiedDateData = null; // 날짜 전체 복사본
-        let copiedTodoItem = null; // 개별 할 일 복사본
+        let copiedDateData = null;
+        let copiedTodoItem = null;
         let activeDateMenuKey = null;
         
         const canvas = document.getElementById('drawing-canvas');
@@ -208,6 +214,45 @@
                 document.getElementById('date-context-menu').classList.add('hidden');
             });
         };
+
+        // --- 백업(내보내기) 및 복원(가져오기) 함수 ---
+        function exportData() {
+            const backupData = {
+                sdm_data: JSON.parse(localStorage.getItem('sdm_data') || '{}'),
+                sdm_minutes: JSON.parse(localStorage.getItem('sdm_minutes') || '[]'),
+                exportDate: new Date().toISOString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `sdm_diary_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    if (backupData.sdm_data) {
+                        localStorage.setItem('sdm_data', JSON.stringify(backupData.sdm_data));
+                    }
+                    if (backupData.sdm_minutes) {
+                        localStorage.setItem('sdm_minutes', JSON.stringify(backupData.sdm_minutes));
+                    }
+                    alert('데이터를 성공적으로 불러왔습니다! 동기화 완료!');
+                    renderView();
+                } catch (err) {
+                    alert('올바른 백업 파일이 아닙니다.');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // 초기화
+        }
 
         function switchView(view) {
             currentView = view;
@@ -768,7 +813,6 @@
             menu.classList.remove('hidden');
         }
 
-        // 개별 할 일 복사
         function copySingleTodo() {
             if (!contextTarget) return;
             const { dateKey, id } = contextTarget;
@@ -783,7 +827,6 @@
             document.getElementById('todo-context-menu').classList.add('hidden');
         }
 
-        // 복사된 할 일 붙여넣기
         function pasteTodoContent() {
             if (!activeDateMenuKey || !copiedTodoItem) {
                 alert('복사된 할 일이 없습니다.');
@@ -793,7 +836,6 @@
             if (!data[activeDateMenuKey]) data[activeDateMenuKey] = { todos: [], tags: [], memo: '' };
             if (!data[activeDateMenuKey].todos) data[activeDateMenuKey].todos = [];
 
-            // 새 아이디 부여하여 추가
             const newTodo = { ...copiedTodoItem, id: Date.now() + Math.random() };
             data[activeDateMenuKey].todos.push(newTodo);
             localStorage.setItem('sdm_data', JSON.stringify(data));
