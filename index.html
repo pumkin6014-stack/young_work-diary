@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDM · 업무 다이어리</title>
+    <title>현영월간다이어리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -16,20 +16,27 @@
 <body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-3 sm:p-6">
 
     <div class="w-full max-w-6xl bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
-        <!-- 상단 헤더 -->
+        <!-- 상단 헤더 및 탭 메뉴 -->
         <header class="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-slate-100 gap-4">
             <div>
-                <p class="text-xs font-bold tracking-widest text-indigo-600 uppercase mb-1">SDM PERSONAL WORK DIARY</p>
-                <h1 class="text-2xl font-bold text-slate-900">월간 다이어리</h1>
+                <p class="text-xs font-bold tracking-widest text-indigo-600 uppercase mb-1">HYEONG's WORK DIARY</p>
+                <h1 id="view-title" class="text-2xl font-bold text-slate-900">현영월간다이어리</h1>
                 <p class="text-xs text-slate-500 mt-0.5">나의 일정 · 업무 · 기록을 한곳에서</p>
+            </div>
+
+            <!-- 뷰 전환 탭 (월간 / 주간 / 일간) -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                <button onclick="switchView('monthly')" id="tab-monthly" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm">월간</button>
+                <button onclick="switchView('weekly')" id="tab-weekly" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">주간</button>
+                <button onclick="switchView('daily')" id="tab-daily" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">일간</button>
             </div>
             
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                    <span id="current-month-title" class="text-base font-bold text-slate-700">2026년 11월</span>
+                    <span id="current-date-title" class="text-base font-bold text-slate-700">2026년 11월</span>
                     <div class="flex gap-1">
-                        <button onclick="changeMonth(-1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">‹</button>
-                        <button onclick="changeMonth(1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">›</button>
+                        <button onclick="changeDate(-1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">‹</button>
+                        <button onclick="changeDate(1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">›</button>
                     </div>
                 </div>
                 <button onclick="goToToday()" class="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50">오늘</button>
@@ -59,28 +66,16 @@
             <button onclick="clearCanvas()" class="ml-auto px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-medium hover:bg-rose-100">필기 초기화</button>
         </div>
 
-        <!-- 캘린더 본체 -->
+        <!-- 다이어리 본체 영역 -->
         <div class="relative border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-            <!-- 요일 헤더 -->
-            <div class="calendar-grid bg-slate-50 border-b border-slate-200 text-center text-xs font-semibold text-slate-500 py-2.5">
-                <div class="text-rose-500">일</div>
-                <div>월</div>
-                <div>화</div>
-                <div>수</div>
-                <div>목</div>
-                <div>금</div>
-                <div class="text-blue-500">토</div>
-            </div>
-            <!-- 날짜 셀 그리드 -->
-            <div id="calendar-days" class="calendar-grid bg-slate-200 gap-[1px]"></div>
-
-            <!-- S펜 투명 캔버스 레이어 -->
-            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-10"></canvas>
+            <div id="view-container" class="min-h-[500px]"></div>
+            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none"></canvas>
         </div>
     </div>
 
     <script>
-        let currentDate = new Date(2026, 10, 1); // 2026년 11월 기준
+        let currentView = 'monthly';
+        let currentDate = new Date(2026, 10, 13);
         let currentTool = 'pen';
         let isDrawing = false;
         
@@ -94,9 +89,294 @@
         window.addEventListener('resize', resizeCanvas);
         window.onload = () => {
             resizeCanvas();
-            renderCalendar();
+            renderView();
         };
 
+        function switchView(view) {
+            currentView = view;
+            ['monthly', 'weekly', 'daily'].forEach(v => {
+                const btn = document.getElementById(`tab-${v}`);
+                if(v === view) {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200";
+                }
+            });
+            const titles = { monthly: '현영월간다이어리', weekly: '주간 다이어리', daily: '일간 다이어리' };
+            document.getElementById('view-title').innerText = titles[view];
+            renderView();
+        }
+
+        function renderView() {
+            if (currentView === 'monthly') renderMonthly();
+            else if (currentView === 'weekly') renderWeekly();
+            else if (currentView === 'daily') renderDaily();
+            loadTodos();
+        }
+
+        // 공통 날짜 셀 생성 헬퍼 (FD, 시간외, 휴가 태그 표시용 컨테이너 포함)
+        function createDayCellHTML(day, dateKey, minHeight = "min-h-[160px]") {
+            return `
+                <div class="bg-white ${minHeight} p-2 flex flex-col justify-between relative hover:bg-slate-50/50">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-700">${day}</span>
+                            <div class="flex flex-wrap gap-0.5 justify-end" id="tags-box-${dateKey}"></div>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mb-1.5">
+                            <button onclick="addTag('${dateKey}', 'FD')" class="text-[9px] px-1 bg-amber-50 text-amber-700 border border-amber-200 rounded hover:bg-amber-100 font-bold">FD</button>
+                            <button onclick="addTag('${dateKey}', '시간외1')" class="text-[9px] px-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100 font-bold">시간외1</button>
+                            <button onclick="addTag('${dateKey}', '시간외1.5')" class="text-[9px] px-1 bg-teal-50 text-teal-700 border border-teal-200 rounded hover:bg-teal-100 font-bold">시간외1.5</button>
+                            <button onclick="addTag('${dateKey}', '시간외2')" class="text-[9px] px-1 bg-cyan-50 text-cyan-700 border border-cyan-200 rounded hover:bg-cyan-100 font-bold">시간외2</button>
+                            <button onclick="addTag('${dateKey}', '휴가')" class="text-[9px] px-1 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100 font-bold">휴가</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[80px]" id="todo-box-${dateKey}"></div>
+                    <div class="flex gap-1 z-20">
+                        <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-md text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 1. 월간 뷰
+        function renderMonthly() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            document.getElementById('current-date-title').innerText = `${year}년 ${month + 1}월`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const prevTotalDays = new Date(year, month, 0).getDate();
+            
+            let html = `
+                <div class="calendar-grid bg-slate-50 border-b border-slate-200 text-center text-xs font-semibold text-slate-500 py-2.5">
+                    <div class="text-rose-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+                </div>
+                <div class="calendar-grid bg-slate-200 gap-[1px]">
+            `;
+
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                html += `<div class="bg-white min-h-[160px] p-2 opacity-30"><div class="text-xs font-semibold text-slate-400">${prevTotalDays - i}</div></div>`;
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                html += createDayCellHTML(day, dateKey, "min-h-[160px]");
+            }
+
+            const totalCells = firstDayIndex + totalDays;
+            const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let day = 1; day <= remaining; day++) {
+                html += `<div class="bg-white min-h-[160px] p-2 opacity-30"><div class="text-xs font-semibold text-slate-400">${day}</div></div>`;
+            }
+
+            html += `</div>`;
+            document.getElementById('view-container').innerHTML = html;
+        }
+
+        // 2. 주간 뷰
+        function renderWeekly() {
+            const curr = new Date(currentDate);
+            const firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
+            const lastday = new Date(curr.setDate(curr.getDate() - curr.getDay() + 6));
+            
+            document.getElementById('current-date-title').innerText = `${firstday.getMonth()+1}/${firstday.getDate()} ~ ${lastday.getMonth()+1}/${lastday.getDate()}`;
+
+            let html = `<div class="grid grid-cols-1 md:grid-cols-7 bg-slate-200 gap-[1px]">`;
+            const daysName = ['일', '월', '화', '수', '목', '금', '토'];
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(firstday);
+                d.setDate(firstday.getDate() + i);
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const titleStr = `${daysName[i]}요일 (${d.getMonth()+1}/${d.getDate()})`;
+                html += createDayCellHTML(titleStr, dateKey, "min-h-[350px]");
+            }
+            html += `</div>`;
+            document.getElementById('view-container').innerHTML = html;
+        }
+
+        // 3. 일간 뷰
+        function renderDaily() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const day = currentDate.getDate();
+            const daysName = ['일', '월', '화', '수', '목', '금', '토'];
+            const dayName = daysName[currentDate.getDay()];
+
+            document.getElementById('current-date-title').innerText = `${year}년 ${month}월 ${day}일 (${dayName})`;
+            const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            let html = `
+                <div class="p-6 max-w-2xl mx-auto bg-white space-y-6">
+                    <div class="border-b border-slate-100 pb-4 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">${month}월 ${day}일 ${dayName}요일</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">오늘의 계획과 할 일을 기록하세요.</p>
+                        </div>
+                        <div class="flex gap-1" id="tags-box-${dateKey}"></div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pb-2 border-b border-slate-50">
+                        <span class="text-xs font-bold text-slate-500 self-center mr-1">근무 태그:</span>
+                        <button onclick="addTag('${dateKey}', 'FD')" class="text-xs px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 font-bold">FD 추가</button>
+                        <button onclick="addTag('${dateKey}', '시간외1')" class="text-xs px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 font-bold">시간외1 추가</button>
+                        <button onclick="addTag('${dateKey}', '시간외1.5')" class="text-xs px-2 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-100 font-bold">시간외1.5 추가</button>
+                        <button onclick="addTag('${dateKey}', '시간외2')" class="text-xs px-2 py-1 bg-cyan-50 text-cyan-700 border border-cyan-200 rounded-lg hover:bg-cyan-100 font-bold">시간외2 추가</button>
+                        <button onclick="addTag('${dateKey}', '휴가')" class="text-xs px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 font-bold">휴가 추가</button>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-600 mb-2">할 일 체크리스트</h3>
+                        <div class="space-y-2 mb-4 max-h-[250px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                        <div class="flex gap-2 z-20">
+                            <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">추가</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('view-container').innerHTML = html;
+        }
+
+        function changeDate(dir) {
+            if (currentView === 'monthly') {
+                currentDate.setMonth(currentDate.getMonth() + dir);
+            } else if (currentView === 'weekly') {
+                currentDate.setDate(currentDate.getDate() + (dir * 7));
+            } else {
+                currentDate.setDate(currentDate.getDate() + dir);
+            }
+            renderView();
+        }
+
+        function goToToday() {
+            currentDate = new Date();
+            renderView();
+        }
+
+        function handleEnter(e, dateKey) {
+            if (e.key === 'Enter') {
+                addTodoItem(dateKey);
+            }
+        }
+
+        // 근무 태그 (FD, 시간외 등) 추가/삭제 로직
+        function addTag(dateKey, tagName) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[dateKey]) data[dateKey] = { todos: [], tags: [] };
+            if(!data[dateKey].tags) data[dateKey].tags = [];
+            
+            data[dateKey].tags.push(tagName);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            loadTodos();
+        }
+
+        function removeTag(dateKey, index) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].tags) {
+                data[dateKey].tags.splice(index, 1);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
+        }
+
+        // 할 일 관리 (추가, 수정, 삭제) - localStorage 구조 업그레이드 호환
+        function addTodoItem(dateKey) {
+            const inputField = document.getElementById(`input-${dateKey}`);
+            if (!inputField) return;
+            const text = inputField.value.trim();
+            if(!text) return;
+
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[dateKey]) data[dateKey] = { todos: [], tags: [] };
+            if(!data[dateKey].todos) data[dateKey].todos = [];
+
+            data[dateKey].todos.push({ id: Date.now(), text, done: false });
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            inputField.value = '';
+            loadTodos();
+        }
+
+        function loadTodos() {
+            // 구버전 sdm_todos 호환 처리
+            const oldTodos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            
+            for(const k in oldTodos) {
+                if(!data[k]) data[k] = { todos: oldTodos[k], tags: [] };
+                else if(!data[k].todos) data[k].todos = oldTodos[k];
+            }
+
+            for (const dateKey in data) {
+                // 1. 할 일 목록 렌더링
+                const box = document.getElementById(`todo-box-${dateKey}`);
+                if (box) {
+                    box.innerHTML = '';
+                    const todos = data[dateKey].todos || [];
+                    todos.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = "flex items-center justify-between text-[11px] bg-slate-50 px-2 py-1 rounded border border-slate-100 group";
+                        itemDiv.innerHTML = `
+                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="더블클릭하여 수정">${item.text}</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-slate-300 hover:text-indigo-600 text-[10px] hidden group-hover:inline">수정</button>
+                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">×</button>
+                            </div>
+                        `;
+                        box.appendChild(itemDiv);
+                    });
+                }
+
+                // 2. 태그(FD, 시간외 등) 목록 렌더링
+                const tagsBox = document.getElementById(`tags-box-${dateKey}`);
+                if (tagsBox) {
+                    tagsBox.innerHTML = '';
+                    const tags = data[dateKey].tags || [];
+                    tags.forEach((tag, idx) => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100";
+                        tagSpan.innerHTML = `${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 text-indigo-400 hover:text-rose-500">×</button>`;
+                        tagsBox.appendChild(tagSpan);
+                    });
+                }
+            }
+        }
+
+        function toggleTodo(dateKey, id) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
+        }
+
+        // 할 일 수정 기능
+        function editTodoItem(dateKey, id) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].todos) {
+                const target = data[dateKey].todos.find(i => i.id === id);
+                if(!target) return;
+                const newText = prompt("할 일 수정:", target.text);
+                if(newText !== null && newText.trim() !== "") {
+                    target.text = newText.trim();
+                    localStorage.setItem('sdm_data', JSON.stringify(data));
+                    loadTodos();
+                }
+            }
+        }
+
+        function deleteTodoItem(dateKey, id) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.filter(i => i.id !== id);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
+        }
+
+        // 입력 모드 설정
         function setMode(mode) {
             const penTools = document.getElementById('pen-tools');
             const btnKeyboard = document.getElementById('btn-keyboard');
@@ -183,118 +463,6 @@
         function clearCanvas() {
             if(confirm('필기 내용을 모두 지우시겠습니까?')) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        }
-
-        // 월간 캘린더 렌더링 (이전/다음 달 전체 연동)
-        function renderCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            document.getElementById('current-month-title').innerText = `${year}년 ${month + 1}월`;
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const totalDays = new Date(year, month + 1, 0).getDate();
-            const prevTotalDays = new Date(year, month, 0).getDate();
-            const daysContainer = document.getElementById('calendar-days');
-            daysContainer.innerHTML = '';
-
-            // 1. 이전 달 여백 채우기
-            for (let i = firstDayIndex - 1; i >= 0; i--) {
-                const dayNum = prevTotalDays - i;
-                const cell = document.createElement('div');
-                cell.className = "bg-white min-h-[140px] p-2 flex flex-col justify-between opacity-30";
-                cell.innerHTML = `<div class="text-xs font-semibold text-slate-400">${dayNum}</div>`;
-                daysContainer.appendChild(cell);
-            }
-
-            // 2. 이번 달 날짜 채우기
-            for (let day = 1; day <= totalDays; day++) {
-                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayDiv = document.createElement('div');
-                dayDiv.className = "bg-white min-h-[140px] p-2 flex flex-col justify-between relative hover:bg-slate-50/50 transition-colors";
-                dayDiv.innerHTML = `
-                    <div class="text-xs font-bold text-slate-700 mb-1">${day}</div>
-                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px]" id="todo-box-${dateKey}"></div>
-                    <div class="flex gap-1 z-20">
-                        <input type="text" id="input-${dateKey}" placeholder="할 일 입력" class="w-full text-[11px] px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
-                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-md text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
-                    </div>
-                `;
-                daysContainer.appendChild(cellFormat(dayDiv));
-            }
-
-            // 3. 다음 달 여백 채우기 (캘린더 칸 맞춤)
-            const totalCellsSoFar = firstDayIndex + totalDays;
-            const remainingCells = totalCellsSoFar % 7 === 0 ? 0 : 7 - (totalCellsSoFar % 7);
-            for (let day = 1; day <= remainingCells; day++) {
-                const cell = document.createElement('div');
-                cell.className = "bg-white min-h-[140px] p-2 flex flex-col justify-between opacity-30";
-                cell.innerHTML = `<div class="text-xs font-semibold text-slate-400">${day}</div>`;
-                daysContainer.appendChild(cell);
-            }
-
-            loadTodos();
-        }
-
-        function cellFormat(el) { return el; }
-
-        function changeMonth(dir) {
-            currentDate.setMonth(currentDate.getMonth() + dir);
-            renderCalendar();
-        }
-
-        function goToToday() {
-            currentDate = new Date();
-            renderCalendar();
-        }
-
-        // 할 일 관리 (추가, 완료선긋기, 삭제)
-        function addTodoItem(dateKey) {
-            const inputField = document.getElementById(`input-${dateKey}`);
-            const text = inputField.value.trim();
-            if(!text) return;
-
-            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
-            if(!todos[dateKey]) todos[dateKey] = [];
-            todos[dateKey].push({ id: Date.now(), text, done: false });
-            localStorage.setItem('sdm_todos', JSON.stringify(todos));
-            inputField.value = '';
-            loadTodos();
-        }
-
-        function loadTodos() {
-            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
-            for (const dateKey in todos) {
-                const box = document.getElementById(`todo-box-${dateKey}`);
-                if (!box) continue;
-                box.innerHTML = '';
-                todos[dateKey].forEach(item => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = "flex items-center justify-between text-[11px] bg-slate-50 px-2 py-1 rounded border border-slate-100 group";
-                    itemDiv.innerHTML = `
-                        <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
-                        <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 ml-1 font-bold text-xs">×</button>
-                    `;
-                    box.appendChild(itemDiv);
-                });
-            }
-        }
-
-        function toggleTodo(dateKey, id) {
-            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
-            if(todos[dateKey]) {
-                todos[dateKey] = todos[dateKey].map(i => i.id === id ? {...i, done: !i.done} : i);
-                localStorage.setItem('sdm_todos', JSON.stringify(todos));
-                loadTodos();
-            }
-        }
-
-        function deleteTodoItem(dateKey, id) {
-            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
-            if(todos[dateKey]) {
-                todos[dateKey] = todos[dateKey].filter(i => i.id !== id);
-                localStorage.setItem('sdm_todos', JSON.stringify(todos));
-                renderCalendar();
             }
         }
     </script>
