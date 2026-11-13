@@ -9,6 +9,9 @@
     <style>
         body { font-family: 'Pretendard', sans-serif; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+        /* 기본 상태에서는 마우스로 글을 쓰지 못하게 막고, 펜 모드일 때만 허용 */
+        #drawing-canvas { pointer-events: none; }
+        #drawing-canvas.pen-active { pointer-events: auto; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-3 sm:p-6">
@@ -29,41 +32,41 @@
             </div>
         </header>
 
-        <!-- S펜 필기 툴바 영역 -->
+        <!-- S펜 및 입력 툴바 영역 -->
         <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center gap-4">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-600">✍️ S펜 도구:</span>
-                <button onclick="setTool('pen')" id="btn-pen" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium">펜</button>
-                <button onclick="setTool('highlighter')" id="btn-highlighter" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium">형광펜</button>
-                <button onclick="setTool('eraser')" id="btn-eraser" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium">지우개</button>
+                <span class="text-xs font-bold text-slate-600">🛠️ 입력 모드:</span>
+                <button onclick="setMode('keyboard')" id="btn-keyboard" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium">키보드 입력 (기본)</button>
+                <button onclick="setMode('pen')" id="btn-pen-mode" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium">✍️ S펜 필기</button>
             </div>
-            <div class="flex items-center gap-2">
-                <label class="text-xs text-slate-500">색상:</label>
-                <input type="color" id="pen-color" value="#4f46e5" class="w-8 h-8 rounded border border-slate-200 cursor-pointer">
+            
+            <div id="pen-tools" class="hidden flex items-center gap-4 border-l pl-4 border-slate-200">
+                <div class="flex items-center gap-1">
+                    <button onclick="setTool('pen')" id="btn-pen" class="px-2.5 py-1 rounded bg-indigo-500 text-white text-[11px]">볼펜</button>
+                    <button onclick="setTool('highlighter')" id="btn-highlighter" class="px-2.5 py-1 rounded bg-white border text-slate-600 text-[11px]">형광펜</button>
+                    <button onclick="setTool('eraser')" id="btn-eraser" class="px-2.5 py-1 rounded bg-white border text-slate-600 text-[11px]">지우개</button>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input type="color" id="pen-color" value="#4f46e5" class="w-7 h-7 rounded border cursor-pointer">
+                    <input type="range" id="pen-size" min="1" max="20" value="3" class="w-20">
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <label class="text-xs text-slate-500">굵기:</label>
-                <input type="range" id="pen-size" min="1" max="20" value="3" class="w-24">
-            </div>
+
             <button onclick="clearCanvas()" class="ml-auto px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-medium hover:bg-rose-100">필기 초기화</button>
         </div>
 
-        <!-- 캘린더 및 필기 캔버스 겹침 영역 -->
+        <!-- 캘린더 및 필기 캔버스 영역 -->
         <div class="relative border border-slate-200 rounded-xl overflow-hidden bg-white">
-            <!-- 요일 헤더 -->
             <div class="calendar-grid bg-slate-50 border-b border-slate-200 text-center text-xs font-semibold text-slate-500 py-2">
                 <div class="text-rose-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
             </div>
-            <!-- 날짜 그리드 -->
             <div id="calendar-days" class="calendar-grid bg-slate-200 gap-[1px]"></div>
-
-            <!-- 갤럭시탭 S펜 필기를 위한 투명 캔버스 레이어 -->
-            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-auto cursor-crosshair z-10"></canvas>
+            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-10"></canvas>
         </div>
     </div>
 
     <script>
-        let currentDate = new Date(2026, 10, 1); // 2026년 11월 기준
+        let currentDate = new Date(2026, 10, 1); // 2026년 11월 시작
         let currentTool = 'pen';
         let isDrawing = false;
         
@@ -78,22 +81,40 @@
         window.onload = () => {
             resizeCanvas();
             renderCalendar();
-            loadTodos();
         };
+
+        // 입력 모드 전환 (컴퓨터 키보드 vs S펜 필기)
+        function setMode(mode) {
+            const penTools = document.getElementById('pen-tools');
+            const btnKeyboard = document.getElementById('btn-keyboard');
+            const btnPenMode = document.getElementById('btn-pen-mode');
+
+            if (mode === 'keyboard') {
+                canvas.classList.remove('pen-active');
+                penTools.classList.add('hidden');
+                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium";
+                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+            } else {
+                canvas.classList.add('pen-active');
+                penTools.classList.remove('hidden');
+                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium";
+                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+            }
+        }
 
         function setTool(tool) {
             currentTool = tool;
             ['pen', 'highlighter', 'eraser'].forEach(t => {
                 const btn = document.getElementById(`btn-${t}`);
                 if(t === tool) {
-                    btn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium";
+                    btn.className = "px-2.5 py-1 rounded bg-indigo-500 text-white text-[11px]";
                 } else {
-                    btn.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+                    btn.className = "px-2.5 py-1 rounded bg-white border text-slate-600 text-[11px]";
                 }
             });
         }
 
-        // 캔버스 드로잉 (S펜 및 터치 지원)
+        // S펜 및 터치 드로잉 이벤트
         canvas.addEventListener('mousedown', startDraw);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDraw);
@@ -109,6 +130,7 @@
         }
 
         function startDraw(e) {
+            if (!canvas.classList.contains('pen-active')) return;
             isDrawing = true;
             ctx.beginPath();
             const pos = getPos(e);
@@ -116,7 +138,7 @@
         }
 
         function draw(e) {
-            if (!isDrawing) return;
+            if (!isDrawing || !canvas.classList.contains('pen-active')) return;
             const pos = getPos(e);
             ctx.lineWidth = document.getElementById('pen-size').value;
             ctx.lineCap = 'round';
@@ -151,7 +173,7 @@
             }
         }
 
-        // 월간 캘린더 생성 함수
+        // 월간 캘린더 생성 (이전/다음 달 이동 완벽 지원)
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
@@ -162,14 +184,14 @@
             const daysContainer = document.getElementById('calendar-days');
             daysContainer.innerHTML = '';
 
-            // 빈 칸 채우기 (이전 달 여백)
+            // 이전 달 남은 빈칸 채우기
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyDiv = document.createElement('div');
-                emptyDiv.className = "bg-white min-h-[120px] opacity-40";
+                emptyDiv.className = "bg-white min-h-[120px] opacity-30";
                 daysContainer.appendChild(emptyDiv);
             }
 
-            // 날짜별 칸 채우기
+            // 이번 달 날짜 채우기
             for (let day = 1; day <= totalDays; day++) {
                 const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayDiv = document.createElement('div');
@@ -177,9 +199,9 @@
                 dayDiv.innerHTML = `
                     <div class="text-xs font-bold text-slate-700 mb-1">${day}</div>
                     <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[80px]" id="todo-box-${dateKey}"></div>
-                    <div class="flex gap-1">
+                    <div class="flex gap-1 z-20">
                         <input type="text" id="input-${dateKey}" placeholder="할 일 입력" class="w-full text-[11px] px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[11px] font-medium">+</button>
+                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[11px] font-medium shrink-0">+</button>
                     </div>
                 `;
                 daysContainer.appendChild(dayDiv);
@@ -192,7 +214,7 @@
             renderCalendar();
         }
 
-        // 할 일 추가/수정/삭제 로직
+        // 할 일 관리 로직
         function addTodoItem(dateKey) {
             const inputField = document.getElementById(`input-${dateKey}`);
             const text = inputField.value.trim();
@@ -216,8 +238,8 @@
                     const itemDiv = document.createElement('div');
                     itemDiv.className = "flex items-center justify-between text-[11px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 group";
                     itemDiv.innerHTML = `
-                        <span class="truncate flex-1 ${item.done ? 'line-through text-slate-400' : 'text-slate-700'}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
-                        <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 ml-1">×</button>
+                        <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700'}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
+                        <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 ml-1 font-bold">×</button>
                     `;
                     box.appendChild(itemDiv);
                 });
