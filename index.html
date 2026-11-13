@@ -27,6 +27,10 @@
 
         #drawing-canvas { pointer-events: none; }
         #drawing-canvas.pen-active { pointer-events: auto; }
+        
+        .todo-item { cursor: grab; }
+        .todo-item:active { cursor: grabbing; }
+        .todo-item.dragging { opacity: 0.4; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col p-2 sm:p-4">
@@ -69,7 +73,7 @@
             <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0">
                 <div class="flex items-center gap-3">
                     <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
-                    <!-- 검색 기능 추가 -->
+                    <!-- 검색 기능 -->
                     <div class="relative">
                         <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="다이어리 내용 검색..." class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 pl-8 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-40 sm:w-56">
                         <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
@@ -148,32 +152,16 @@
         </div>
     </div>
 
-    <!-- 일정 하이라이트 유형 선택 모달팝업 -->
-    <div id="todo-color-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-slate-800 text-sm">일정 하이라이트 유형 선택</h3>
-                <button onclick="closeTodoColorModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
-            </div>
-            <div class="grid grid-cols-1 gap-2">
-                <button onclick="setTodoColor('bg-rose-50 text-rose-700 border-rose-200')" class="p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs text-left flex items-center justify-between">
-                    <span>🔴 회의 & 교육</span>
-                    <span class="text-[10px] opacity-70">빨간색</span>
-                </button>
-                <button onclick="setTodoColor('bg-amber-50 text-amber-700 border-amber-200')" class="p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs text-left flex items-center justify-between">
-                    <span>🟡 업무 요청</span>
-                    <span class="text-[10px] opacity-70">노란색</span>
-                </button>
-                <button onclick="setTodoColor('bg-emerald-50 text-emerald-700 border-emerald-200')" class="p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs text-left flex items-center justify-between">
-                    <span>🟢 공지</span>
-                    <span class="text-[10px] opacity-70">초록색</span>
-                </button>
-                <button onclick="setTodoColor('bg-white text-slate-700 border-slate-100')" class="p-3 rounded-xl bg-white text-slate-600 border border-slate-200 font-bold text-xs text-left flex items-center justify-between">
-                    <span>⚪ 기본</span>
-                    <span class="text-[10px] opacity-70">배경 없음</span>
-                </button>
-            </div>
-        </div>
+    <!-- 할 일 항목 우클릭 컨텍스트 메뉴 (색상 변경 및 수정) -->
+    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-44 text-xs">
+        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">일정 유형 설정</div>
+        <button onclick="applyContextMenuColor('bg-rose-50 text-rose-700 border-rose-200')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 font-medium flex items-center gap-2"><span>🔴</span> 회의 & 교육</button>
+        <button onclick="applyContextMenuColor('bg-amber-50 text-amber-700 border-amber-200')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 font-medium flex items-center gap-2"><span>🟡</span> 업무 요청</button>
+        <button onclick="applyContextMenuColor('bg-emerald-50 text-emerald-700 border-emerald-200')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 font-medium flex items-center gap-2"><span>🟢</span> 공지</button>
+        <button onclick="applyContextMenuColor('bg-white text-slate-700 border-slate-100')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-600 font-medium flex items-center gap-2"><span>⚪</span> 기본 (배경없음)</button>
+        <div class="border-t border-slate-100 my-1"></div>
+        <button onclick="contextMenuEdit()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium">✏️ 내용 수정</button>
+        <button onclick="contextMenuDelete()" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-600 font-medium">🗑️ 항목 삭제</button>
     </div>
 
     <script>
@@ -183,8 +171,9 @@
         let isDrawing = false;
         let activeDateKey = null;
         let activeMinuteId = null;
-        let activeTodoEditTarget = null;
         let searchQuery = '';
+        
+        let contextTarget = null; // { dateKey, id }
         
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
@@ -197,6 +186,10 @@
         window.onload = () => {
             resizeCanvas();
             renderView();
+            // 화면 다른 곳 누르면 우클릭 메뉴 닫기
+            window.addEventListener('click', () => {
+                document.getElementById('todo-context-menu').classList.add('hidden');
+            });
         };
 
         function switchView(view) {
@@ -242,12 +235,12 @@
                         <div class="flex justify-between items-center mb-1">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-800 cursor-pointer hover:text-indigo-600">${day}</span>
                         </div>
-                        <!-- 태그들이 입력창 위쪽에 정렬되도록 배치 -->
                         <div class="flex flex-wrap gap-1 mb-1" id="tags-box-${dateKey}"></div>
                     </div>
-                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px]" id="todo-box-${dateKey}"></div>
                     
-                    <!-- 할 일 입력창 및 하단 버튼 영역 -->
+                    <!-- 드래그 앤 드롭 영역 -->
+                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px] todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
+                    
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
                             <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -319,7 +312,7 @@
                     
                     <div class="flex-1 flex flex-col justify-between space-y-3 my-1">
                         <div>
-                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
                                     <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -433,10 +426,10 @@
                     <!-- 할 일 체크리스트 영역 -->
                     <div class="space-y-3 shrink-0">
                         <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">할 일 체크리스트</span>
+                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">할 일 체크리스트 (항목을 마우스로 끌어서 순서 변경 가능)</span>
                         </div>
                         <div class="bg-slate-50/70 border border-slate-200 p-4 rounded-xl space-y-2">
-                            <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                 <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
@@ -603,7 +596,6 @@
         function selectChefTag(chefName) {
             if (!activeDateKey) return;
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if(!data[activeDateKey]) data[data[dateKey]] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
             data[activeDateKey].tags.push(`조리사: ${chefName}`);
@@ -657,21 +649,34 @@
                     const todos = data[dateKey].todos || [];
 
                     todos.forEach((item, index) => {
-                        // 검색어 필터링 적용
                         const isMatched = !searchQuery || item.text.toLowerCase().includes(searchQuery) || (data[dateKey].memo && data[dateKey].memo.toLowerCase().includes(searchQuery));
                         
                         const itemDiv = document.createElement('div');
                         const customStyle = item.style || 'bg-white text-slate-700 border-slate-100';
-                        itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border transition-all ${customStyle} ${searchQuery && !isMatched ? 'opacity-20' : ''}`;
+                        itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border transition-all todo-item ${customStyle} ${searchQuery && !isMatched ? 'opacity-20' : ''}`;
+                        itemDiv.draggable = true;
+                        itemDiv.dataset.id = item.id;
+                        itemDiv.dataset.dateKey = dateKey;
+                        itemDiv.dataset.index = index;
+
+                        // 드래그 이벤트 등록
+                        itemDiv.addEventListener('dragstart', (e) => {
+                            e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id, index }));
+                            itemDiv.classList.add('dragging');
+                        });
+                        itemDiv.addEventListener('dragend', () => {
+                            itemDiv.classList.remove('dragging');
+                        });
+
+                        // 우클릭 이벤트 (컨텍스트 메뉴)
+                        itemDiv.addEventListener('contextmenu', (e) => {
+                            e.preventDefault();
+                            openContextMenu(e, dateKey, item.id);
+                        });
+
                         itemDiv.innerHTML = `
-                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : 'font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" title="클릭하여 완료/미완">☐ ${item.text}</span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <button onclick="moveTodoOrder('${dateKey}', ${index}, -1)" class="text-[9px] opacity-60 hover:opacity-100 px-0.5" title="위로 이동">▲</button>
-                                <button onclick="moveTodoOrder('${dateKey}', ${index}, 1)" class="text-[9px] opacity-60 hover:opacity-100 px-0.5" title="아래로 이동">▼</button>
-                                <button onclick="openTodoColorModal('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 font-bold px-0.5" title="유형 변경">🎨</button>
-                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 px-0.5">수정</button>
-                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-xs opacity-60 hover:opacity-100 font-bold px-0.5">×</button>
-                            </div>
+                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : 'font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" title="클릭하여 완료/미완">${item.text}</span>
+                            <span class="text-[9px] opacity-40 ml-1 select-none">⠿</span>
                         `;
                         box.appendChild(itemDiv);
                     });
@@ -725,47 +730,45 @@
             });
         }
 
-        // 할 일 순서 위/아래 이동 함수
-        function moveTodoOrder(dateKey, index, direction) {
+        // --- 드래그 앤 드롭 순서 변경 로직 ---
+        function allowDrop(e) { e.preventDefault(); }
+
+        function dropTodo(e, targetDateKey) {
+            e.preventDefault();
+            const rawData = e.dataTransfer.getData('text/plain');
+            if (!rawData) return;
+            const { dateKey: srcDateKey, id } = JSON.parse(rawData);
+
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if (data[dateKey] && data[dateKey].todos) {
-                const todos = data[dateKey].todos;
-                const targetIndex = index + direction;
-                if (targetIndex < 0 || targetIndex >= todos.length) return; // 범위를 벗어나면 무시
-                
-                // 위치 교환(스왑)
-                const temp = todos[index];
-                todos[index] = todos[targetIndex];
-                todos[targetIndex] = temp;
+            if (!data[srcDateKey] || !data[srcDateKey].todos) return;
 
-                localStorage.setItem('sdm_data', JSON.stringify(data));
-                loadTodos();
-            }
+            // 소스 항목 찾기 및 제거
+            const sourceTodos = data[srcDateKey].todos;
+            const itemIndex = sourceTodos.findIndex(i => i.id === id);
+            if (itemIndex === -1) return;
+            const [movedItem] = sourceTodos.splice(itemIndex, 1);
+
+            // 타겟 날짜에 추가
+            if (!data[targetDateKey]) data[targetDateKey] = { todos: [], tags: [], memo: '' };
+            if (!data[targetDateKey].todos) data[targetDateKey].todos = [];
+            data[targetDateKey].todos.push(movedItem);
+
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            loadTodos();
         }
 
-        function toggleTodo(dateKey, id) {
-            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if(data[dateKey] && data[dateKey].todos) {
-                data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
-                localStorage.setItem('sdm_data', JSON.stringify(data));
-                loadTodos();
-            }
+        // --- 우클릭 컨텍스트 메뉴 제어 ---
+        function openContextMenu(e, dateKey, id) {
+            contextTarget = { dateKey, id };
+            const menu = document.getElementById('todo-context-menu');
+            menu.style.top = `${e.clientY}px`;
+            menu.style.left = `${e.clientX}px`;
+            menu.classList.remove('hidden');
         }
 
-        // --- 일정 하이라이트 유형 선택 모달 제어 ---
-        function openTodoColorModal(dateKey, id) {
-            activeTodoEditTarget = { dateKey, id };
-            document.getElementById('todo-color-modal').classList.remove('hidden');
-        }
-
-        function closeTodoColorModal() {
-            document.getElementById('todo-color-modal').classList.add('hidden');
-            activeTodoEditTarget = null;
-        }
-
-        function setTodoColor(styleClass) {
-            if (!activeTodoEditTarget) return;
-            const { dateKey, id } = activeTodoEditTarget;
+        function applyContextMenuColor(styleClass) {
+            if (!contextTarget) return;
+            const { dateKey, id } = contextTarget;
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if (data[dateKey] && data[dateKey].todos) {
                 const target = data[dateKey].todos.find(i => i.id === id);
@@ -775,27 +778,46 @@
                     loadTodos();
                 }
             }
-            closeTodoColorModal();
+            document.getElementById('todo-context-menu').classList.add('hidden');
+            contextTarget = null;
         }
 
-        function editTodoItem(dateKey, id) {
+        function contextMenuEdit() {
+            if (!contextTarget) return;
+            const { dateKey, id } = contextTarget;
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if(data[dateKey] && data[dateKey].todos) {
+            if (data[dateKey] && data[dateKey].todos) {
                 const target = data[dateKey].todos.find(i => i.id === id);
-                if(!target) return;
-                const newText = prompt("할 일 수정:", target.text);
-                if(newText !== null && newText.trim() !== "") {
-                    target.text = newText.trim();
-                    localStorage.setItem('sdm_data', JSON.stringify(data));
-                    loadTodos();
+                if (target) {
+                    const newText = prompt("할 일 수정:", target.text);
+                    if (newText !== null && newText.trim() !== "") {
+                        target.text = newText.trim();
+                        localStorage.setItem('sdm_data', JSON.stringify(data));
+                        loadTodos();
+                    }
                 }
             }
+            document.getElementById('todo-context-menu').classList.add('hidden');
+            contextTarget = null;
         }
 
-        function deleteTodoItem(dateKey, id) {
+        function contextMenuDelete() {
+            if (!contextTarget) return;
+            const { dateKey, id } = contextTarget;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.filter(i => i.id !== id);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
+            document.getElementById('todo-context-menu').classList.add('hidden');
+            contextTarget = null;
+        }
+
+        function toggleTodo(dateKey, id) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].todos) {
-                data[dateKey].todos = data[dateKey].todos.filter(i => i.id !== id);
+                data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
                 loadTodos();
             }
