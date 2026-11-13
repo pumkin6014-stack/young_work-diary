@@ -98,7 +98,7 @@
             </div>
 
             <!-- 스크롤 가능한 본문 영역 -->
-            <div class="flex-1 overflow-y-auto relative p-4 sm:p-8" id="view-container"></div>
+            <div class="flex-1 overflow-y-auto relative p-4 sm:p-6" id="view-container"></div>
             <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none"></canvas>
         </div>
     </div>
@@ -185,7 +185,7 @@
                     </div>
                     <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px]" id="todo-box-${dateKey}"></div>
                     <div class="flex gap-1 z-30">
-                        <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border-0 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
                     </div>
                 </div>
@@ -233,10 +233,10 @@
             switchView('daily');
         }
 
-        // --- 주간 뷰 (위아래 4개씩 모던한 카드형태, 마지막 8번째 칸은 빈 칸으로 구성) ---
+        // --- 주간 뷰 (위아래 4개씩 빈틈없이 꽉 채우고 마지막은 빈 칸) ---
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
-                <div class="p-5 flex flex-col justify-between clean-notebook min-h-[440px] rounded-2xl border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all">
+                <div class="p-5 flex flex-col justify-between clean-notebook min-h-[440px] rounded-2xl border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all bg-white">
                     <div>
                         <div class="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-100">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold text-slate-900 cursor-pointer hover:text-indigo-600">${dayTitle}</span>
@@ -249,13 +249,13 @@
                         <div>
                             <div class="space-y-1.5 mb-3 max-h-[140px] overflow-y-auto" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-1.5">
-                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3 py-2 bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
+                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/80 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
                             </div>
                         </div>
 
                         <div class="pt-2">
-                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-32 text-xs p-3 bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
+                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-32 text-xs p-3.5 bg-slate-50/80 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
                         </div>
                     </div>
 
@@ -293,19 +293,17 @@
                 else bottomRowHTML += cellHTML;
             }
 
-            // 아래 젤 마지막 8번째 칸은 빈 칸(공백 카드)으로 깔끔하게 채워서 위아래 완벽한 4개씩 균형 유지
+            // 아래 마지막 8번째 빈 칸은 글자 없이 깔끔하게 비움
             let emptyCardHTML = `
-                <div class="p-5 flex flex-col justify-center items-center clean-notebook min-h-[440px] rounded-2xl border border-dashed border-slate-200 opacity-40 bg-slate-50/30">
-                    <span class="text-xs font-medium text-slate-400">SDM PLANNER</span>
-                </div>
+                <div class="p-5 flex flex-col justify-center items-center clean-notebook min-h-[440px] rounded-2xl border border-dashed border-slate-200 opacity-30 bg-slate-50/20"></div>
             `;
 
             let html = `
-                <div class="max-w-7xl mx-auto w-full space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="max-w-7xl mx-auto w-full space-y-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                         ${topRowHTML}
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                         ${bottomRowHTML}
                         ${emptyCardHTML}
                     </div>
@@ -339,15 +337,15 @@
                     <div class="flex flex-wrap gap-1.5 pb-2" id="tags-box-${dateKey}"></div>
 
                     <div class="space-y-2">
-                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-56 text-sm p-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
+                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-56 text-sm p-4 bg-slate-50/50 border-0 rounded-2xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
                     </div>
 
                     <div class="space-y-2 pt-4">
                         <div class="text-xs font-bold text-slate-600 mb-2">할 일 체크리스트</div>
                         <div class="space-y-2 mb-4 max-h-[220px] overflow-y-auto" id="todo-box-${dateKey}"></div>
                         <div class="flex gap-2">
-                            <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
+                            <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-3 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-3 rounded-xl text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
                         </div>
                     </div>
                 </div>
@@ -403,27 +401,27 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-1">회의 제목</label>
-                            <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목을 입력하세요" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목을 입력하세요" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-1">회의 일시</label>
-                            <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">참석자</label>
-                        <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름을 입력하세요 (예: 김철수, 이영희)" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름을 입력하세요 (예: 김철수, 이영희)" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">회의 안건 / 주요 내용</label>
-                        <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의에서 논의된 주요 안건과 내용을 기록하세요..." class="w-full h-32 text-xs p-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.content || ''}</textarea>
+                        <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의에서 논의된 주요 안건과 내용을 기록하세요..." class="w-full h-32 text-xs p-3.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.content || ''}</textarea>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">실행 과제 및 결정 사항 (Action Items)</label>
-                        <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="결정된 사항과 향후 실행할 과제를 적어주세요..." class="w-full h-24 text-xs p-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.actions || ''}</textarea>
+                        <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="결정된 사항과 향후 실행할 과제를 적어주세요..." class="w-full h-24 text-xs p-3.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.actions || ''}</textarea>
                     </div>
                 </div>
             `;
@@ -528,7 +526,7 @@
 
                     todos.forEach(item => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = "flex items-center justify-between text-[11px] bg-white/80 px-2 py-1 rounded-lg border border-slate-100 group shadow-2xs";
+                        itemDiv.className = "flex items-center justify-between text-[11px] bg-white/80 px-2 py-1 rounded-lg group";
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="클릭하여 완료/미완">☐ ${item.text}</span>
                             <div class="flex items-center gap-1">
@@ -551,7 +549,7 @@
                     const tags = data[dateKey].tags || [];
                     tags.forEach((tag, idx) => {
                         const tagSpan = document.createElement('span');
-                        tagSpan.className = "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100/50 mr-1 mb-1";
+                        tagSpan.className = "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 mr-1 mb-1";
                         tagSpan.innerHTML = `${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 text-indigo-400 hover:text-rose-500">×</button>`;
                         tagsBox.appendChild(tagSpan);
                     });
