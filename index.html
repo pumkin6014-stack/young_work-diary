@@ -89,13 +89,12 @@
                         </div>
                     </div>
                     <button onclick="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-2xs">오늘</button>
-                    
-                    <!-- 실시간 로그인 연동 버튼 영역 -->
-                    <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-xl border border-slate-200">
-                        <span id="login-status-text" class="text-[11px] font-medium text-slate-500">기기 연동 안됨</span>
-                        <button id="auth-btn" onclick="toggleAuth()" class="px-2.5 py-1 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">포털 연동 로그인</button>
+                    <!-- 기기 간 백업/복원 연동 버튼 -->
+                    <div class="flex items-center gap-1 border-l pl-2 border-slate-200">
+                        <button onclick="exportData()" class="px-2.5 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100" title="현재 다이어리 백업파일 다운로드">💾 내보내기</button>
+                        <button onclick="document.getElementById('import-file').click()" class="px-2.5 py-1.5 text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200 rounded-xl hover:bg-sky-100" title="백업파일 불러와서 동기화">📂 가져오기</button>
+                        <input type="file" id="import-file" accept=".json" onchange="importData(event)" class="hidden">
                     </div>
-
                     <button onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hidden md:block">인쇄 / PDF</button>
                 </div>
             </header>
@@ -199,9 +198,6 @@
         let copiedTodoItem = null;
         let activeDateMenuKey = null;
         
-        // 클라우드 연동을 위한 전역 상태 (로그인 계정별 동기화)
-        let currentUser = localStorage.getItem('sdm_logged_user') || null;
-
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
 
@@ -212,7 +208,6 @@
         window.addEventListener('resize', resizeCanvas);
         window.onload = () => {
             resizeCanvas();
-            updateLoginUI();
             renderView();
             window.addEventListener('click', () => {
                 document.getElementById('todo-context-menu').classList.add('hidden');
@@ -220,69 +215,45 @@
             });
         };
 
-        // --- 실시간 포털 연동 로그인 시뮬레이터 ---
-        function updateLoginUI() {
-            const statusText = document.getElementById('login-status-text');
-            const authBtn = document.getElementById('auth-btn');
-            if (currentUser) {
-                statusText.innerText = `${currentUser}님 연동됨`;
-                statusText.className = "text-[11px] font-bold text-emerald-600";
-                authBtn.innerText = "로그아웃";
-                authBtn.className = "px-2.5 py-1 text-xs font-bold bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300";
-            } else {
-                statusText.innerText = "업무포털 미연결";
-                statusText.className = "text-[11px] font-medium text-slate-500";
-                authBtn.innerText = "포털 연동 로그인";
-                authBtn.className = "px-2.5 py-1 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700";
-            }
+        // --- 백업(내보내기) 및 복원(가져오기) 함수 ---
+        function exportData() {
+            const backupData = {
+                sdm_data: JSON.parse(localStorage.getItem('sdm_data') || '{}'),
+                sdm_minutes: JSON.parse(localStorage.getItem('sdm_minutes') || '[]'),
+                exportDate: new Date().toISOString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `sdm_diary_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
         }
 
-        function toggleAuth() {
-            if (currentUser) {
-                if (confirm('포털 연동 로그아웃 하시겠습니까?')) {
-                    currentUser = null;
-                    localStorage.removeItem('sdm_logged_user');
-                    updateLoginUI();
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    if (backupData.sdm_data) {
+                        localStorage.setItem('sdm_data', JSON.stringify(backupData.sdm_data));
+                    }
+                    if (backupData.sdm_minutes) {
+                        localStorage.setItem('sdm_minutes', JSON.stringify(backupData.sdm_minutes));
+                    }
+                    alert('데이터를 성공적으로 불러왔습니다!');
                     renderView();
+                } catch (err) {
+                    alert('올바른 백업 파일이 아닙니다.');
                 }
-            } else {
-                const userId = prompt("포털 아이디(이메일 또는 사번)를 입력하세요:");
-                if (userId && userId.trim() !== "") {
-                    currentUser = userId.trim();
-                    localStorage.setItem('sdm_logged_user', currentUser);
-                    updateLoginUI();
-                    alert(`${currentUser}님으로 포털 연동되었습니다! 핸드폰에서도 같은 아이디로 로그인하시면 즉시 동기화됩니다.`);
-                    renderView();
-                }
-            }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
         }
 
-        // --- 데이터 저장 및 로드 (계정별 실시간 클라우드 시뮬레이션 연동) ---
-        function getDataStorageKey() {
-            return currentUser ? `sdm_data_${currentUser}` : 'sdm_data_guest';
-        }
-
-        function getMinutesStorageKey() {
-            return currentUser ? `sdm_minutes_${currentUser}` : 'sdm_minutes_guest';
-        }
-
-        function getAppData() {
-            return JSON.parse(localStorage.getItem(getDataStorageKey()) || '{}');
-        }
-
-        function saveAppData(data) {
-            localStorage.setItem(getDataStorageKey(), JSON.stringify(data));
-        }
-
-        function getAppMinutes() {
-            return JSON.parse(localStorage.getItem(getMinutesStorageKey()) || '[]');
-        }
-
-        function saveAppMinutes(minutes) {
-            localStorage.setItem(getMinutesStorageKey(), JSON.stringify(minutes));
-        }
-
-        // --- 뷰 전환 및 렌더링 ---
         function switchView(view) {
             currentView = view;
             if (view === 'daily') {
@@ -550,7 +521,7 @@
 
         // --- 회의록 뷰 ---
         function renderMinutes() {
-            const minutes = getAppMinutes();
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             if (minutes.length > 0 && !activeMinuteId) activeMinuteId = minutes[0].id;
 
             let html = `
@@ -572,7 +543,7 @@
                             </div>
                         </div>
                         <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-200">
-                            포털 연동 실시간 저장됨
+                            기기에 안전하게 저장됨
                         </div>
                     </div>
 
@@ -623,17 +594,17 @@
         }
 
         function createMinute() {
-            const minutes = getAppMinutes();
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             const newM = { id: Date.now(), title: '새로운 회의록', date: new Date().toISOString().split('T')[0], attendees: '', content: '', actions: '' };
             minutes.unshift(newM);
-            saveAppMinutes(minutes);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = newM.id;
             renderMinutes();
         }
 
         function selectMinute(id) { activeMinuteId = id; renderMinutes(); }
         function updateMinute(id) {
-            const minutes = getAppMinutes();
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             const target = minutes.find(m => m.id === id);
             if (!target) return;
             target.title = document.getElementById('m-title').value;
@@ -641,14 +612,14 @@
             target.attendees = document.getElementById('m-attendees').value;
             target.content = document.getElementById('m-content').value;
             target.actions = document.getElementById('m-actions').value;
-            saveAppMinutes(minutes);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             renderView();
         }
         function deleteMinute(id) {
             if(!confirm('이 회의록을 삭제하시겠습니까?')) return;
-            let minutes = getAppMinutes();
+            let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             minutes = minutes.filter(m => m.id !== id);
-            saveAppMinutes(minutes);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
             renderMinutes();
         }
@@ -674,11 +645,11 @@
 
         function selectTag(tagName) {
             if (!activeDateKey) return;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
             data[activeDateKey].tags.push(tagName);
-            saveAppData(data);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             closeTagModal();
             loadTodos();
         }
@@ -688,20 +659,20 @@
 
         function selectChefTag(name) {
             if (!activeDateKey) return;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
             data[activeDateKey].tags.push(`휴가: ${name}`);
-            saveAppData(data);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             closeChefModal();
             loadTodos();
         }
 
         function removeTag(dateKey, index) {
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].tags) {
                 data[dateKey].tags.splice(index, 1);
-                saveAppData(data);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
                 loadTodos();
             }
         }
@@ -712,12 +683,12 @@
             const text = inputField.value.trim();
             if(!text) return;
 
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             if(!data[dateKey].todos) data[dateKey].todos = [];
 
             data[dateKey].todos.push({ id: Date.now(), text, done: false, style: 'bg-white text-slate-700 border-slate-100' });
-            saveAppData(data);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             inputField.value = '';
             loadTodos();
         }
@@ -725,15 +696,15 @@
         function saveMemo(dateKey) {
             const memoField = document.getElementById(`memo-${dateKey}`);
             if (!memoField) return;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             data[dateKey].memo = memoField.value;
-            saveAppData(data);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
         }
 
         function loadTodos() {
-            const data = getAppData();
-            const minutes = getAppMinutes();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             
             for (const dateKey in data) {
                 const box = document.getElementById(`todo-box-${dateKey}`);
@@ -845,7 +816,7 @@
         function copySingleTodo() {
             if (!contextTarget) return;
             const { dateKey, id } = contextTarget;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if (data[dateKey] && data[dateKey].todos) {
                 const target = data[dateKey].todos.find(t => t.id === id);
                 if (target) {
@@ -861,13 +832,13 @@
                 alert('복사된 할 일이 없습니다.');
                 return;
             }
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if (!data[activeDateMenuKey]) data[activeDateMenuKey] = { todos: [], tags: [], memo: '' };
             if (!data[activeDateMenuKey].todos) data[activeDateMenuKey].todos = [];
 
             const newTodo = { ...copiedTodoItem, id: Date.now() + Math.random() };
             data[activeDateMenuKey].todos.push(newTodo);
-            saveAppData(data);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             renderView();
             document.getElementById('date-context-menu').classList.add('hidden');
             document.getElementById('todo-context-menu').classList.add('hidden');
@@ -875,7 +846,7 @@
 
         function copyDateContent() {
             if (!activeDateMenuKey) return;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             copiedDateData = data[activeDateMenuKey] ? JSON.parse(JSON.stringify(data[activeDateMenuKey])) : { todos: [], tags: [], memo: '' };
             alert('날짜 전체 내용이 복사되었습니다!');
             document.getElementById('date-context-menu').classList.add('hidden');
@@ -891,12 +862,12 @@
                 alert('복사된 내용이 없습니다.');
                 return;
             }
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             data[activeDateMenuKey] = JSON.parse(JSON.stringify(copiedDateData));
             if (data[activeDateMenuKey].todos) {
                 data[activeDateMenuKey].todos = data[activeDateMenuKey].todos.map(t => ({...t, id: Date.now() + Math.random()}));
             }
-            saveAppData(data);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             renderView();
             document.getElementById('date-context-menu').classList.add('hidden');
             document.getElementById('todo-context-menu').classList.add('hidden');
@@ -910,7 +881,7 @@
             if (!rawData) return;
             const { dateKey: srcDateKey, id } = JSON.parse(rawData);
 
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if (!data[srcDateKey] || !data[srcDateKey].todos) return;
 
             const sourceTodos = data[srcDateKey].todos;
@@ -922,19 +893,19 @@
             if (!data[targetDateKey].todos) data[targetDateKey].todos = [];
             data[targetDateKey].todos.push(movedItem);
 
-            saveAppData(data);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             loadTodos();
         }
 
         function applyContextMenuColor(styleClass) {
             if (!contextTarget) return;
             const { dateKey, id } = contextTarget;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if (data[dateKey] && data[dateKey].todos) {
                 const target = data[dateKey].todos.find(i => i.id === id);
                 if (target) {
                     target.style = styleClass;
-                    saveAppData(data);
+                    localStorage.setItem('sdm_data', JSON.stringify(data));
                     loadTodos();
                 }
             }
@@ -945,14 +916,14 @@
         function contextMenuEdit() {
             if (!contextTarget) return;
             const { dateKey, id } = contextTarget;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if (data[dateKey] && data[dateKey].todos) {
                 const target = data[dateKey].todos.find(i => i.id === id);
                 if (target) {
                     const newText = prompt("할 일 수정:", target.text);
                     if (newText !== null && newText.trim() !== "") {
                         target.text = newText.trim();
-                        saveAppData(data);
+                        localStorage.setItem('sdm_data', JSON.stringify(data));
                         loadTodos();
                     }
                 }
@@ -964,10 +935,10 @@
         function contextMenuDelete() {
             if (!contextTarget) return;
             const { dateKey, id } = contextTarget;
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if (data[dateKey] && data[dateKey].todos) {
                 data[dateKey].todos = data[dateKey].todos.filter(i => i.id !== id);
-                saveAppData(data);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
                 loadTodos();
             }
             document.getElementById('todo-context-menu').classList.add('hidden');
@@ -975,10 +946,10 @@
         }
 
         function toggleTodo(dateKey, id) {
-            const data = getAppData();
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].todos) {
                 data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
-                saveAppData(data);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
                 loadTodos();
             }
         }
