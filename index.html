@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>월간다이어리</title>
+    <title>회의록 · 다이어리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -15,29 +15,26 @@
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-3 sm:p-6">
 
-    <div class="w-full max-w-6xl bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+    <div class="w-full max-w-7xl bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
         <!-- 상단 헤더 및 탭 메뉴 -->
         <header class="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-slate-100 gap-4">
             <div>
                 <p class="text-xs font-bold tracking-widest text-indigo-600 uppercase mb-1">WORK DIARY</p>
-                <h1 id="view-title" class="text-2xl font-bold text-slate-900">월간다이어리</h1>
+                <h1 id="view-title" class="text-2xl font-bold text-slate-900">회의록</h1>
                 <p class="text-xs text-slate-500 mt-0.5">나의 일정 · 업무 · 기록을 한곳에서</p>
             </div>
 
-            <!-- 뷰 전환 탭 (월간 / 주간 / 일간) -->
+            <!-- 뷰 전환 탭 (월간 / 주간 / 일간 / 회의록) -->
             <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                <button onclick="switchView('monthly')" id="tab-monthly" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm">월간</button>
+                <button onclick="switchView('monthly')" id="tab-monthly" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">월간</button>
                 <button onclick="switchView('weekly')" id="tab-weekly" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">주간</button>
                 <button onclick="switchView('daily')" id="tab-daily" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">일간</button>
+                <button onclick="switchView('minutes')" id="tab-minutes" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm">회의록</button>
             </div>
             
             <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                    <span id="current-date-title" class="text-base font-bold text-slate-700">2026년 11월</span>
-                    <div class="flex gap-1">
-                        <button onclick="changeDate(-1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">‹</button>
-                        <button onclick="changeDate(1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">›</button>
-                    </div>
+                <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <span id="current-date-title" class="text-base font-bold text-slate-700">회의 기록 관리</span>
                 </div>
                 <button onclick="goToToday()" class="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50">오늘</button>
             </div>
@@ -68,7 +65,7 @@
 
         <!-- 다이어리 본체 영역 -->
         <div class="relative border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-            <div id="view-container" class="min-h-[500px]"></div>
+            <div id="view-container" class="min-h-[550px]"></div>
             <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none"></canvas>
         </div>
     </div>
@@ -91,11 +88,12 @@
     </div>
 
     <script>
-        let currentView = 'monthly';
+        let currentView = 'minutes'; // 기본을 회의록으로 설정하여 바로 확인 가능
         let currentDate = new Date(2026, 10, 13);
         let currentTool = 'pen';
         let isDrawing = false;
         let activeDateKey = null;
+        let activeMinuteId = null;
         
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
@@ -112,17 +110,28 @@
 
         function switchView(view) {
             currentView = view;
-            ['monthly', 'weekly', 'daily'].forEach(v => {
+            ['monthly', 'weekly', 'daily', 'minutes'].forEach(v => {
                 const btn = document.getElementById(`tab-${v}`);
-                if(v === view) {
-                    btn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm";
-                } else {
-                    btn.className = "px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200";
+                if(btn) {
+                    if(v === view) {
+                        btn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200";
+                    }
                 }
             });
-            const titles = { monthly: '월간다이어리', weekly: '주간다이어리', daily: '일간다이어리' };
+            const titles = { monthly: '월간다이어리', weekly: '주간다이어리', daily: '일간다이어리', minutes: '회의록' };
             document.getElementById('view-title').innerText = titles[view];
             document.title = titles[view];
+            
+            // 상단 날짜 네비게이터 표시 여부 제어
+            const nav = document.getElementById('date-navigator');
+            if(view === 'minutes') {
+                nav.style.display = 'none';
+            } else {
+                nav.style.display = 'flex';
+            }
+
             renderView();
         }
 
@@ -130,15 +139,148 @@
             if (currentView === 'monthly') renderMonthly();
             else if (currentView === 'weekly') renderWeekly();
             else if (currentView === 'daily') renderDaily();
+            else if (currentView === 'minutes') renderMinutes();
             loadTodos();
         }
 
-        function createMonthlyCellHTML(day, dateKey) {
+        // --- 회의록 뷰 렌더링 ---
+        function renderMinutes() {
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            if (minutes.length > 0 && !activeMinuteId) {
+                activeMinuteId = minutes[0].id;
+            }
+
+            let html = `
+                <div class="grid grid-cols-1 md:grid-cols-12 min-h-[550px]">
+                    <!-- 좌측 회의록 목록 -->
+                    <div class="md:col-span-4 border-r border-slate-200 p-4 bg-slate-50/50 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">회의록 목록</h3>
+                                <button onclick="createMinute()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700">+ 회의 기록</button>
+                            </div>
+                            <div class="space-y-1.5 overflow-y-auto max-h-[440px]" id="minutes-list-box">
+                                ${minutes.length === 0 ? '<p class="text-xs text-slate-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
+                                ${minutes.map(m => `
+                                    <div onclick="selectMinute(${m.id})" class="p-3 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-white border-slate-200 hover:bg-slate-50'}">
+                                        <div class="text-xs font-bold text-slate-800 truncate">${m.title || '제목 없음'}</div>
+                                        <div class="text-[10px] text-slate-400 mt-0.5">${m.date || ''} · 참석자: ${m.attendees || '미지정'}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-200">
+                            기기에 안전하게 저장됨 · 업무포털 미연결
+                        </div>
+                    </div>
+
+                    <!-- 우측 회의록 상세 편집 양식 -->
+                    <div class="md:col-span-8 p-6 bg-white flex flex-col justify-between" id="minute-editor-box">
+                        ${renderMinuteEditor(minutes.find(m => m.id === activeMinuteId))}
+                    </div>
+                </div>
+            `;
+            document.getElementById('view-container').innerHTML = html;
+        }
+
+        function renderMinuteEditor(minute) {
+            if (!minute) {
+                return `<div class="flex flex-col items-center justify-center h-full text-slate-400 py-20 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
+            }
+            return `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm">회의록 상세 작성</h3>
+                        <button onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2 py-1 rounded font-semibold">삭제</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">회의 제목</label>
+                            type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목을 입력하세요" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">회의 일시</label>
+                            <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">참석자</label>
+                        <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름을 입력하세요 (예: 김철수, 이영희)" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">회의 안건 / 주요 내용</label>
+                        <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의에서 논의된 주요 안건과 내용을 기록하세요..." class="w-full h-32 text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none">${minute.content || ''}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">실행 과제 및 결정 사항 (Action Items)</label>
+                        <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="결정된 사항과 향후 실행할 과제를 적어주세요..." class="w-full h-24 text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none">${minute.actions || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createMinute() {
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            const newM = {
+                id: Date.now(),
+                title: '새로운 회의록',
+                date: new Date().toISOString().split('T')[0],
+                attendees: '',
+                content: '',
+                actions: ''
+            };
+            minutes.unshift(newM);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            activeMinuteId = newM.id;
+            renderMinutes();
+        }
+
+        function selectMinute(id) {
+            activeMinuteId = id;
+            renderMinutes();
+        }
+
+        function updateMinute(id) {
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            const target = minutes.find(m => m.id === id);
+            if (!target) return;
+
+            target.title = document.getElementById('m-title').value;
+            target.date = document.getElementById('m-date').value;
+            target.attendees = document.getElementById('m-attendees').value;
+            target.content = document.getElementById('m-content').value;
+            target.actions = document.getElementById('m-actions').value;
+
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            
+            // 목록 타이틀 실시간 반영을 위해 리스트 영역만 살짝 갱신
+            const listEl = document.getElementById('minutes-list-box');
+            if (listEl) {
+                // 부드러운 유지를 위해 제목만 갱신하거나 전체 렌더링 수행
+            }
+        }
+
+        function deleteMinute(id) {
+            if(!confirm('이 회의록을 삭제하시겠습니까?')) return;
+            let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            minutes = minutes.filter(m => m.id !== id);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
+            renderMinutes();
+        }
+
+
+        // --- 기존 월간 / 주간 / 일간 뷰 로직 ---
+        function createMonthlyCellHTML(year, month, day, dateKey) {
             return `
                 <div class="bg-white min-h-[160px] p-2 flex flex-col justify-between relative hover:bg-slate-50/50">
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-xs font-bold text-slate-700">${day}</span>
+                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-700 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${day}</span>
                             <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-2" id="tags-box-${dateKey}"></div>
@@ -152,19 +294,34 @@
             `;
         }
 
-        function createSimpleCellHTML(dayTitle, dateKey, minHeight = "min-h-[160px]") {
+        function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
-                <div class="bg-white ${minHeight} p-2 flex flex-col justify-between relative hover:bg-slate-50/50">
+                <div class="bg-white min-h-[420px] p-3 flex flex-col justify-between relative hover:bg-slate-50/50">
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-xs font-bold text-slate-700">${dayTitle}</span>
+                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-indigo-600 cursor-pointer hover:underline" title="클릭시 일간 다이어리로 이동">${dayTitle}</span>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-2" id="tags-box-${dateKey}"></div>
                     </div>
-                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[150px]" id="todo-box-${dateKey}"></div>
-                    <div class="flex gap-1 z-20">
-                        <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
-                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-md text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
+                    
+                    <div class="flex-1 space-y-3 overflow-y-auto my-2">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 mb-1">할 일 체크리스트</div>
+                            <div class="space-y-1 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="flex gap-1 z-20">
+                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-md text-[11px] font-bold shrink-0">+</button>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-2">
+                            <div class="text-[10px] font-bold text-slate-500 mb-1">오늘의 메모 · 업무 내용</div>
+                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="업무 내용을 입력하세요..." class="w-full h-24 text-[11px] p-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="text-right pt-2 border-t border-slate-100">
+                        <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-[11px] text-indigo-600 font-semibold hover:underline">상세 기록 →</button>
                     </div>
                 </div>
             `;
@@ -192,7 +349,7 @@
 
             for (let day = 1; day <= totalDays; day++) {
                 const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                html += createMonthlyCellHTML(day, dateKey);
+                html += createMonthlyCellHTML(year, month, day, dateKey);
             }
 
             const totalCells = firstDayIndex + totalDays;
@@ -205,22 +362,31 @@
             document.getElementById('view-container').innerHTML = html;
         }
 
+        function goToDaily(year, month, day) {
+            currentDate = new Date(year, month, day);
+            switchView('daily');
+        }
+
         function renderWeekly() {
             const curr = new Date(currentDate);
             const firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
             const lastday = new Date(curr.setDate(curr.getDate() - curr.getDay() + 6));
             
-            document.getElementById('current-date-title').innerText = `${firstday.getMonth()+1}/${firstday.getDate()} ~ ${lastday.getMonth()+1}/${lastday.getDate()}`;
+            document.getElementById('current-date-title').innerText = `${firstday.getMonth()+1}월 ${firstday.getDate()}일 ~ ${lastday.getMonth()+1}월 ${lastday.getDate()}일`;
 
             let html = `<div class="grid grid-cols-1 md:grid-cols-7 bg-slate-200 gap-[1px]">`;
-            const daysName = ['일', '월', '화', '수', '목', '금', '토'];
+            const daysName = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
             for (let i = 0; i < 7; i++) {
                 const d = new Date(firstday);
                 d.setDate(firstday.getDate() + i);
-                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                const titleStr = `${daysName[i]}요일 (${d.getMonth()+1}/${d.getDate()})`;
-                html += createSimpleCellHTML(titleStr, dateKey, "min-h-[350px]");
+                const year = d.getFullYear();
+                const month = d.getMonth();
+                const day = d.getDate();
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const titleStr = `${daysName[i]} ${day}`;
+                
+                html += createWeeklyCellHTML(titleStr, dateKey, year, month, day);
             }
             html += `</div>`;
             document.getElementById('view-container').innerHTML = html;
@@ -237,17 +403,24 @@
             const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
             let html = `
-                <div class="p-6 max-w-2xl mx-auto bg-white space-y-6">
+                <div class="p-6 max-w-4xl mx-auto bg-white space-y-6">
                     <div class="border-b border-slate-100 pb-4 flex justify-between items-center">
                         <div>
                             <h2 class="text-xl font-bold text-slate-800">${month}월 ${day}일 ${dayName}요일</h2>
-                            <p class="text-xs text-slate-400 mt-0.5">오늘의 계획과 할 일을 기록하세요.</p>
+                            <p class="text-xs text-slate-400 mt-0.5">나의 일정 · 업무 · 기록을 한곳에서</p>
                         </div>
                     </div>
+                    
                     <div class="flex flex-wrap gap-1.5 pb-2 border-b border-slate-50" id="tags-box-${dateKey}"></div>
-                    <div>
-                        <h3 class="text-xs font-bold text-slate-600 mb-2">할 일 체크리스트</h3>
-                        <div class="space-y-2 mb-4 max-h-[250px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold text-slate-600">나의 일정 · 메모</h3>
+                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="오늘의 계획과 메모를 작성하세요..." class="w-full h-32 text-sm p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold text-slate-600">할 일 체크리스트</h3>
+                        <div class="space-y-2 mb-4 max-h-[220px] overflow-y-auto" id="todo-box-${dateKey}"></div>
                         <div class="flex gap-2 z-20">
                             <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
                             <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">추가</button>
@@ -293,7 +466,7 @@
         function selectTag(tagName) {
             if (!activeDateKey) return;
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [] };
+            if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
             
             data[activeDateKey].tags.push(tagName);
@@ -318,7 +491,7 @@
             if(!text) return;
 
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if(!data[dateKey]) data[dateKey] = { todos: [], tags: [] };
+            if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             if(!data[dateKey].todos) data[dateKey].todos = [];
 
             data[dateKey].todos.push({ id: Date.now(), text, done: false });
@@ -327,15 +500,18 @@
             loadTodos();
         }
 
+        function saveMemo(dateKey) {
+            const memoField = document.getElementById(`memo-${dateKey}`);
+            if (!memoField) return;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
+            data[dateKey].memo = memoField.value;
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+        }
+
         function loadTodos() {
-            const oldTodos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             
-            for(const k in oldTodos) {
-                if(!data[k]) data[k] = { todos: oldTodos[k], tags: [] };
-                else if(!data[k].todos) data[k].todos = oldTodos[k];
-            }
-
             for (const dateKey in data) {
                 const box = document.getElementById(`todo-box-${dateKey}`);
                 if (box) {
@@ -353,6 +529,11 @@
                         `;
                         box.appendChild(itemDiv);
                     });
+                }
+
+                const memoField = document.getElementById(`memo-${dateKey}`);
+                if (memoField && document.activeElement !== memoField) {
+                    memoField.value = data[dateKey].memo || '';
                 }
 
                 const tagsBox = document.getElementById(`tags-box-${dateKey}`);
