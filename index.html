@@ -131,9 +131,8 @@
     </div>
 
     <script>
-        // 처음 접속 시 월간(monthly) 뷰가 기본으로 뜨도록 수정
         let currentView = 'monthly';
-        let currentDate = new Date(2026, 10, 15);
+        let currentDate = new Date(); // 기본 날짜를 오늘로 설정
         let currentTool = 'pen';
         let isDrawing = false;
         let activeDateKey = null;
@@ -154,6 +153,12 @@
 
         function switchView(view) {
             currentView = view;
+            
+            // 일간 뷰로 전환할 때 오늘 날짜가 바로 뜨도록 설정
+            if (view === 'daily') {
+                currentDate = new Date();
+            }
+
             ['monthly', 'weekly', 'daily', 'minutes'].forEach(v => {
                 const btn = document.getElementById(`tab-${v}`);
                 if(btn) {
@@ -183,7 +188,7 @@
             loadTodos();
         }
 
-        // --- 월간 뷰 ---
+        // --- 월간 뷰 (월요일 시작 기준 정렬) ---
         function createMonthlyCellHTML(year, month, day, dateKey) {
             return `
                 <div class="bg-white min-h-[180px] p-2.5 flex flex-col justify-between relative border border-slate-200">
@@ -208,14 +213,18 @@
             const month = currentDate.getMonth();
             document.getElementById('current-date-title').innerText = `${year}년 ${month + 1}월`;
 
-            const firstDayIndex = new Date(year, month, 1).getDay();
+            const firstDayObj = new Date(year, month, 1);
+            let firstDayIndex = firstDayObj.getDay(); // 0(일) ~ 6(토)
+            // 월요일 시작(0:월요일 ~ 6:일요일)으로 변환
+            firstDayIndex = (firstDayIndex + 6) % 7;
+
             const totalDays = new Date(year, month + 1, 0).getDate();
             const prevTotalDays = new Date(year, month, 0).getDate();
             
             let html = `
                 <div class="w-full bg-white border-0 overflow-hidden">
                     <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 bg-slate-50 py-3 border-b border-slate-200">
-                        <div class="text-rose-500">일요일</div><div>월요일</div><div>화요일</div><div>수요일</div><div>목요일</div><div>금요일</div><div class="text-blue-500">토요일</div>
+                        <div>월요일</div><div>화요일</div><div>수요일</div><div>목요일</div><div>금요일</div><div class="text-blue-500">토요일</div><div class="text-rose-500">일요일</div>
                     </div>
                     <div class="grid grid-cols-7 gap-[1px] bg-slate-200">
             `;
@@ -244,7 +253,7 @@
             switchView('daily');
         }
 
-        // --- 주간 뷰 ---
+        // --- 주간 뷰 (월요일부터 시작하도록 순서 변경) ---
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
                 <div class="p-5 flex flex-col justify-between min-h-[460px] border-r border-b border-slate-200 bg-white">
@@ -283,12 +292,19 @@
 
         function renderWeekly() {
             const curr = new Date(currentDate);
-            const firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
-            const lastday = new Date(curr.setDate(curr.getDate() - curr.getDay() + 6));
+            let dayOfWeek = curr.getDay(); // 0(일) ~ 6(토)
+            // 월요일을 주의 시작(0)으로 맞추기 위한 계산
+            let distanceToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            
+            const firstday = new Date(curr);
+            firstday.setDate(curr.getDate() + distanceToMon);
+
+            const lastday = new Date(firstday);
+            lastday.setDate(firstday.getDate() + 6);
             
             document.getElementById('current-date-title').innerText = `${firstday.getMonth()+1}월 ${firstday.getDate()}일 ~ ${lastday.getMonth()+1}월 ${lastday.getDate()}일`;
 
-            const daysName = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+            const daysName = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
             let topRowHTML = '';
             let bottomRowHTML = '';
 
@@ -299,9 +315,10 @@
                 const month = d.getMonth();
                 const day = d.getDate();
                 const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
                 let titleStr = `${daysName[i]} ${day}`;
-                if(i===0) titleStr = `<span class="text-rose-500">${daysName[i]}</span> ${day}`;
-                if(i===6) titleStr = `<span class="text-blue-500">${daysName[i]}</span> ${day}`;
+                if(i===5) titleStr = `<span class="text-blue-500">토요일</span> ${day}`;
+                if(i===6) titleStr = `<span class="text-rose-500">일요일</span> ${day}`;
                 
                 const cellHTML = createWeeklyCellHTML(titleStr, dateKey, year, month, day);
                 if (i < 4) topRowHTML += cellHTML;
