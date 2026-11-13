@@ -3,74 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주간다이어리</title>
+    <title>SDM · 업무 다이어리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Pretendard', sans-serif; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; }
+        .notebook-line {
+            background-image: linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            background-size: 100% 28px;
+        }
         #drawing-canvas { pointer-events: none; }
         #drawing-canvas.pen-active { pointer-events: auto; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-3 sm:p-6">
+<body class="min-h-screen text-slate-800 flex flex-col p-2 sm:p-4">
 
-    <div class="w-full max-w-7xl bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
-        <!-- 상단 헤더 및 탭 메뉴 -->
-        <header class="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-slate-100 gap-4">
-            <div>
-                <p class="text-xs font-bold tracking-widest text-indigo-600 uppercase mb-1">WORK DIARY</p>
-                <h1 id="view-title" class="text-2xl font-bold text-slate-900">주간다이어리</h1>
-                <p class="text-xs text-slate-500 mt-0.5">나의 일정 · 업무 · 기록을 한곳에서</p>
+    <!-- 전체 화면 꽉 채우는 레이아웃 컨테이너 -->
+    <div class="flex-1 flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+        
+        <!-- 좌측 사이드 네비게이션 바 (SDM 스타일) -->
+        <aside class="w-16 sm:w-20 bg-slate-900 text-white flex flex-col items-center py-5 justify-between shrink-0 select-none">
+            <div class="flex flex-col items-center space-y-6">
+                <div class="text-[10px] font-black tracking-widest text-slate-400">SDM</div>
+                <div class="space-y-3 w-full px-2">
+                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
+                        <span class="text-xs font-bold">M</span>
+                        <span class="text-[9px] mt-0.5">월간</span>
+                    </button>
+                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm">
+                        <span class="text-xs font-bold">W</span>
+                        <span class="text-[9px] mt-0.5">주간</span>
+                    </button>
+                    <button onclick="switchView('daily')" id="tab-daily" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
+                        <span class="text-xs font-bold">D</span>
+                        <span class="text-[9px] mt-0.5">일간</span>
+                    </button>
+                    <button onclick="switchView('minutes')" id="tab-minutes" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
+                        <span class="text-xs font-bold">N</span>
+                        <span class="text-[9px] mt-0.5">회의록</span>
+                    </button>
+                </div>
             </div>
+            <div class="text-[9px] text-slate-500 font-mono text-center px-1">
+                SDM<br>PLANNER
+            </div>
+        </aside>
 
-            <!-- 뷰 전환 탭 (월간 / 주간 / 일간 / 회의록) -->
-            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                <button onclick="switchView('monthly')" id="tab-monthly" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">월간</button>
-                <button onclick="switchView('weekly')" id="tab-weekly" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm">주간</button>
-                <button onclick="switchView('daily')" id="tab-daily" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">일간</button>
-                <button onclick="switchView('minutes')" id="tab-minutes" class="px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200">회의록</button>
-            </div>
+        <!-- 우측 메인 작업 영역 -->
+        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
             
-            <div class="flex items-center gap-3">
-                <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                    <span id="current-date-title" class="text-base font-bold text-slate-700">11월 8일 ~ 11월 14일</span>
-                    <div class="flex gap-1">
-                        <button onclick="changeDate(-1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">‹</button>
-                        <button onclick="changeDate(1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold">›</button>
+            <!-- 상단 헤더 영역 -->
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex flex-wrap justify-between items-center gap-4 shrink-0">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 id="view-title" class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">주간 다이어리</h1>
+                        <span class="text-[11px] text-slate-400 hidden sm:inline">나의 일정 · 업무 · 기록을 한곳에서</span>
                     </div>
+                    <div class="text-[11px] text-indigo-600 font-medium mt-0.5">📌 업무포털 미연결 · 개인 기록은 기기에 저장됩니다</div>
                 </div>
-                <button onclick="goToToday()" class="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50">오늘</button>
-            </div>
-        </header>
 
-        <!-- 필기 및 입력 툴바 영역 -->
-        <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center gap-4">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-600">입력 모드:</span>
-                <button onclick="setMode('keyboard')" id="btn-keyboard" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium shadow-sm">키보드 입력 (기본)</button>
-                <button onclick="setMode('pen')" id="btn-pen-mode" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium">✍️ S펜 필기</button>
-            </div>
-            
-            <div id="pen-tools" class="hidden flex items-center gap-3 border-l pl-4 border-slate-200">
-                <div class="flex items-center gap-1">
-                    <button onclick="setTool('pen')" id="btn-pen" class="px-2.5 py-1 rounded bg-indigo-600 text-white text-[11px]">볼펜</button>
-                    <button onclick="setTool('highlighter')" id="btn-highlighter" class="px-2.5 py-1 rounded bg-white border text-slate-600 text-[11px]">형광펜</button>
-                    <button onclick="setTool('eraser')" id="btn-eraser" class="px-2.5 py-1 rounded bg-white border text-slate-600 text-[11px]">지우개</button>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                        <span id="current-date-title" class="text-sm font-bold text-slate-700">11월 8일 ~ 11월 14일</span>
+                        <div class="flex gap-1">
+                            <button onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold">‹</button>
+                            <button onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold">›</button>
+                        </div>
+                    </div>
+                    <button onclick="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm">오늘</button>
+                    <button onclick="alert('기기 백업 기능')" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hidden md:block">암호화 백업</button>
+                    <button onclick="alert('포털 연동 대기중')" class="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-sm">포털 연동 로그인</button>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input type="color" id="pen-color" value="#4f46e5" class="w-7 h-7 rounded border cursor-pointer">
-                    <input type="range" id="pen-size" min="1" max="20" value="3" class="w-20">
+            </header>
+
+            <!-- 펜 및 툴바 영역 -->
+            <div class="bg-white border-b border-slate-200 px-4 py-2 flex flex-wrap items-center gap-3 text-xs shrink-0">
+                <div class="flex items-center gap-1.5">
+                    <button onclick="setMode('keyboard')" id="btn-keyboard" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-medium shadow-sm">접기 -</button>
+                    <button onclick="setMode('pen')" id="btn-pen-mode" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200">선택 펜</button>
                 </div>
+
+                <div id="pen-tools" class="hidden flex items-center gap-2 border-l pl-3 border-slate-200">
+                    <div class="flex items-center gap-1">
+                        <button onclick="setTool('pen')" id="btn-pen" class="px-2 py-0.5 rounded bg-indigo-600 text-white text-[11px]">볼펜</button>
+                        <button onclick="setTool('highlighter')" id="btn-highlighter" class="px-2 py-0.5 rounded bg-white border text-slate-600 text-[11px]">형광펜</button>
+                        <button onclick="setTool('eraser')" id="btn-eraser" class="px-2 py-0.5 rounded bg-white border text-slate-600 text-[11px]">지우개</button>
+                    </div>
+                    <input type="color" id="pen-color" value="#4f46e5" class="w-6 h-6 rounded border cursor-pointer">
+                    <input type="range" id="pen-size" min="1" max="20" value="3" class="w-16">
+                </div>
+
+                <button onclick="clearCanvas()" class="ml-auto text-rose-500 hover:text-rose-700 font-medium">필기 삭제</button>
             </div>
 
-            <button onclick="clearCanvas()" class="ml-auto px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-medium hover:bg-rose-100">필기 초기화</button>
-        </div>
-
-        <!-- 다이어리 본체 영역 -->
-        <div class="relative border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-            <div id="view-container" class="min-h-[550px]"></div>
-            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none"></canvas>
+            <!-- 스크롤 가능한 본문 영역 (화면 꽉 채움) -->
+            <div class="flex-1 overflow-y-auto relative p-4 sm:p-6" id="view-container"></div>
+            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none"></canvas>
         </div>
     </div>
 
@@ -118,22 +146,19 @@
                 const btn = document.getElementById(`tab-${v}`);
                 if(btn) {
                     if(v === view) {
-                        btn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm";
+                        btn.className = "w-full py-2.5 rounded-lg flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm";
                     } else {
-                        btn.className = "px-3 py-1.5 rounded-lg text-slate-600 text-xs font-semibold hover:bg-slate-200";
+                        btn.className = "w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all";
                     }
                 }
             });
-            const titles = { monthly: '월간다이어리', weekly: '주간다이어리', daily: '일간다이어리', minutes: '회의록' };
+            const titles = { monthly: '월간다이어리', weekly: '주간 다이어리', daily: '일간 다이어리', minutes: '회의록' };
             document.getElementById('view-title').innerText = titles[view];
-            document.title = titles[view];
+            document.title = titles[view] + ' · SDM';
             
             const nav = document.getElementById('date-navigator');
-            if(view === 'minutes') {
-                nav.style.display = 'none';
-            } else {
-                nav.style.display = 'flex';
-            }
+            if(view === 'minutes') nav.style.display = 'none';
+            else nav.style.display = 'flex';
 
             renderView();
         }
@@ -149,16 +174,16 @@
         // --- 월간 뷰 ---
         function createMonthlyCellHTML(year, month, day, dateKey) {
             return `
-                <div class="bg-white min-h-[160px] p-2 flex flex-col justify-between relative hover:bg-slate-50/50">
+                <div class="bg-white min-h-[160px] p-2.5 flex flex-col justify-between relative border border-slate-200 hover:bg-slate-50/50">
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
-                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-700 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${day}</span>
+                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-800 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${day}</span>
                             <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-2" id="tags-box-${dateKey}"></div>
                     </div>
                     <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[80px]" id="todo-box-${dateKey}"></div>
-                    <div class="flex gap-1 z-20">
+                    <div class="flex gap-1 z-30">
                         <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
                         <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-md text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
                     </div>
@@ -176,14 +201,15 @@
             const prevTotalDays = new Date(year, month, 0).getDate();
             
             let html = `
-                <div class="calendar-grid bg-slate-50 border-b border-slate-200 text-center text-xs font-semibold text-slate-500 py-2.5">
-                    <div class="text-rose-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
-                </div>
-                <div class="calendar-grid bg-slate-200 gap-[1px]">
+                <div class="max-w-7xl mx-auto w-full bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-200 text-center text-xs font-semibold text-slate-500 py-2.5">
+                        <div class="text-rose-500">일요일</div><div>월요일</div><div>화요일</div><div>수요일</div><div>목요일</div><div>금요일</div><div class="text-blue-500">토요일</div>
+                    </div>
+                    <div class="grid grid-cols-7 bg-slate-200 gap-[1px]">
             `;
 
             for (let i = firstDayIndex - 1; i >= 0; i--) {
-                html += `<div class="bg-white min-h-[160px] p-2 opacity-30"><div class="text-xs font-semibold text-slate-400">${prevTotalDays - i}</div></div>`;
+                html += `<div class="bg-white min-h-[160px] p-2.5 opacity-30 border border-slate-200"><div class="text-xs font-semibold text-slate-400">${prevTotalDays - i}</div></div>`;
             }
 
             for (let day = 1; day <= totalDays; day++) {
@@ -194,10 +220,10 @@
             const totalCells = firstDayIndex + totalDays;
             const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
             for (let day = 1; day <= remaining; day++) {
-                html += `<div class="bg-white min-h-[160px] p-2 opacity-30"><div class="text-xs font-semibold text-slate-400">${day}</div></div>`;
+                html += `<div class="bg-white min-h-[160px] p-2.5 opacity-30 border border-slate-200"><div class="text-xs font-semibold text-slate-400">${day}</div></div>`;
             }
 
-            html += `</div>`;
+            html += `</div></div>`;
             document.getElementById('view-container').innerHTML = html;
         }
 
@@ -206,34 +232,38 @@
             switchView('daily');
         }
 
-        // --- 주간 뷰 (위 4일, 아래 3일 큼직한 2단 배치) ---
+        // --- 주간 뷰 (위 4일, 아래 3일 큼직한 줄 노트형 배치) ---
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
-                <div class="bg-white min-h-[380px] p-4 flex flex-col justify-between relative hover:bg-slate-50/50 border border-slate-200 rounded-xl shadow-sm">
+                <div class="bg-white min-h-[420px] p-4 flex flex-col justify-between relative border border-slate-200 rounded-xl shadow-sm notebook-line">
                     <div>
-                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 bg-white/80 backdrop-blur-sm">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold text-slate-900 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${dayTitle}</span>
-                            <div class="flex flex-wrap gap-1 justify-end" id="tags-box-${dateKey}"></div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-400" id="todo-count-${dateKey}">0/0 완료</span>
+                                <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
+                            </div>
                         </div>
+                        <div class="flex flex-wrap gap-1 mb-2" id="tags-box-${dateKey}"></div>
                     </div>
                     
-                    <div class="flex-1 space-y-3 overflow-y-auto my-1">
+                    <div class="flex-1 space-y-3 overflow-y-auto my-1 z-30">
                         <div>
-                            <div class="text-xs font-bold text-slate-400 mb-1">할 일 체크리스트</div>
-                            <div class="space-y-1.5 mb-2 max-h-[130px] overflow-y-auto" id="todo-box-${dateKey}"></div>
-                            <div class="flex gap-1.5 z-20">
+                            <div class="text-[11px] font-bold text-slate-500 mb-1">할 일 체크리스트</div>
+                            <div class="space-y-1 mb-2 max-h-[130px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="flex gap-1 z-30">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
-                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shrink-0">+</button>
+                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-100 pt-2.5">
-                            <div class="text-xs font-bold text-slate-500 mb-1">오늘의 메모 · 업무 내용</div>
-                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="업무 내용을 입력하세요..." class="w-full h-32 text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
+                        <div class="border-t border-slate-200 pt-2.5 bg-white/80 backdrop-blur-sm">
+                            <div class="text-[11px] font-bold text-slate-500 mb-1">오늘의 메모 · 업무 내용</div>
+                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="업무 내용을 입력하세요..." class="w-full h-32 text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white resize-none"></textarea>
                         </div>
                     </div>
 
-                    <div class="text-right pt-2 border-t border-slate-100">
+                    <div class="text-right pt-2 border-t border-slate-200 bg-white/80 backdrop-blur-sm z-30">
                         <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs text-indigo-600 font-semibold hover:underline">상세 기록 →</button>
                     </div>
                 </div>
@@ -258,23 +288,20 @@
                 const month = d.getMonth();
                 const day = d.getDate();
                 const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const titleStr = `${daysName[i]} ${day}`;
+                let titleStr = `${daysName[i]} ${day}`;
+                if(i===0) titleStr = `<span class="text-rose-500">${daysName[i]}</span> ${day}`;
+                if(i===6) titleStr = `<span class="text-blue-500">${daysName[i]}</span> ${day}`;
                 
                 const cellHTML = createWeeklyCellHTML(titleStr, dateKey, year, month, day);
-                if (i < 4) {
-                    topRowHTML += cellHTML; // 일, 월, 화, 수 (4개)
-                } else {
-                    bottomRowHTML += cellHTML; // 목, 금, 토 (3개)
-                }
+                if (i < 4) topRowHTML += cellHTML;
+                else bottomRowHTML += cellHTML;
             }
 
             let html = `
-                <div class="p-4 bg-slate-100 space-y-4">
-                    <!-- 위쪽 4일 (일~수) -->
+                <div class="max-w-7xl mx-auto w-full space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         ${topRowHTML}
                     </div>
-                    <!-- 아래쪽 3일 (목~토) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         ${bottomRowHTML}
                     </div>
@@ -295,25 +322,26 @@
             const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
             let html = `
-                <div class="p-6 max-w-4xl mx-auto bg-white space-y-6">
-                    <div class="border-b border-slate-100 pb-4 flex justify-between items-center">
+                <div class="max-w-4xl mx-auto bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-6 notebook-line">
+                    <div class="border-b border-slate-200 pb-4 flex justify-between items-center bg-white/90">
                         <div>
                             <h2 class="text-xl font-bold text-slate-800">${month}월 ${day}일 ${dayName}요일</h2>
                             <p class="text-xs text-slate-400 mt-0.5">나의 일정 · 업무 · 기록을 한곳에서</p>
                         </div>
+                        <button onclick="openTagModal('${dateKey}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-200">+ 근무 태그 추가</button>
                     </div>
                     
-                    <div class="flex flex-wrap gap-1.5 pb-2 border-b border-slate-50" id="tags-box-${dateKey}"></div>
+                    <div class="flex flex-wrap gap-1.5 pb-2 bg-white/90" id="tags-box-${dateKey}"></div>
 
-                    <div class="space-y-2">
-                        <h3 class="text-xs font-bold text-slate-600">나의 일정 · 메모</h3>
-                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="오늘의 계획과 메모를 작성하세요..." class="w-full h-32 text-sm p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
+                    <div class="space-y-2 z-30 relative bg-white/90 p-3 rounded-xl border border-slate-100">
+                        <h3 class="text-xs font-bold text-slate-700">나의 일정 · 메모</h3>
+                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="오늘의 계획과 메모를 작성하세요..." class="w-full h-36 text-sm p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white resize-none"></textarea>
                     </div>
 
-                    <div class="space-y-2">
-                        <h3 class="text-xs font-bold text-slate-600">할 일 체크리스트</h3>
+                    <div class="space-y-2 z-30 relative bg-white/90 p-3 rounded-xl border border-slate-100">
+                        <h3 class="text-xs font-bold text-slate-700">할 일 체크리스트</h3>
                         <div class="space-y-2 mb-4 max-h-[220px] overflow-y-auto" id="todo-box-${dateKey}"></div>
-                        <div class="flex gap-2 z-20">
+                        <div class="flex gap-2 z-30">
                             <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
                             <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">추가</button>
                         </div>
@@ -326,19 +354,17 @@
         // --- 회의록 뷰 ---
         function renderMinutes() {
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-            if (minutes.length > 0 && !activeMinuteId) {
-                activeMinuteId = minutes[0].id;
-            }
+            if (minutes.length > 0 && !activeMinuteId) activeMinuteId = minutes[0].id;
 
             let html = `
-                <div class="grid grid-cols-1 md:grid-cols-12 min-h-[550px]">
+                <div class="max-w-7xl mx-auto w-full bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
                     <div class="md:col-span-4 border-r border-slate-200 p-4 bg-slate-50/50 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">회의록 목록</h3>
                                 <button onclick="createMinute()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700">+ 회의 기록</button>
                             </div>
-                            <div class="space-y-1.5 overflow-y-auto max-h-[440px]" id="minutes-list-box">
+                            <div class="space-y-1.5 overflow-y-auto max-h-[500px]" id="minutes-list-box">
                                 ${minutes.length === 0 ? '<p class="text-xs text-slate-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
                                 ${minutes.map(m => `
                                     <div onclick="selectMinute(${m.id})" class="p-3 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-white border-slate-200 hover:bg-slate-50'}">
@@ -349,7 +375,7 @@
                             </div>
                         </div>
                         <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-200">
-                            기기에 안전하게 저장됨 · 업무포털 미연결
+                            기기에 안전하게 저장됨
                         </div>
                     </div>
 
@@ -362,9 +388,7 @@
         }
 
         function renderMinuteEditor(minute) {
-            if (!minute) {
-                return `<div class="flex flex-col items-center justify-center h-full text-slate-400 py-20 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
-            }
+            if (!minute) return `<div class="flex flex-col items-center justify-center h-full text-slate-400 py-20 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
             return `
                 <div class="space-y-4">
                     <div class="flex justify-between items-center border-b pb-3">
@@ -403,39 +427,25 @@
 
         function createMinute() {
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-            const newM = {
-                id: Date.now(),
-                title: '새로운 회의록',
-                date: new Date().toISOString().split('T')[0],
-                attendees: '',
-                content: '',
-                actions: ''
-            };
+            const newM = { id: Date.now(), title: '새로운 회의록', date: new Date().toISOString().split('T')[0], attendees: '', content: '', actions: '' };
             minutes.unshift(newM);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = newM.id;
             renderMinutes();
         }
 
-        function selectMinute(id) {
-            activeMinuteId = id;
-            renderMinutes();
-        }
-
+        function selectMinute(id) { activeMinuteId = id; renderMinutes(); }
         function updateMinute(id) {
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             const target = minutes.find(m => m.id === id);
             if (!target) return;
-
             target.title = document.getElementById('m-title').value;
             target.date = document.getElementById('m-date').value;
             target.attendees = document.getElementById('m-attendees').value;
             target.content = document.getElementById('m-content').value;
             target.actions = document.getElementById('m-actions').value;
-
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
         }
-
         function deleteMinute(id) {
             if(!confirm('이 회의록을 삭제하시겠습니까?')) return;
             let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
@@ -447,43 +457,22 @@
 
         // 공통 조작 함수
         function changeDate(dir) {
-            if (currentView === 'monthly') {
-                currentDate.setMonth(currentDate.getMonth() + dir);
-            } else if (currentView === 'weekly') {
-                currentDate.setDate(currentDate.getDate() + (dir * 7));
-            } else {
-                currentDate.setDate(currentDate.getDate() + dir);
-            }
+            if (currentView === 'monthly') currentDate.setMonth(currentDate.getMonth() + dir);
+            else if (currentView === 'weekly') currentDate.setDate(currentDate.getDate() + (dir * 7));
+            else currentDate.setDate(currentDate.getDate() + dir);
             renderView();
         }
 
-        function goToToday() {
-            currentDate = new Date();
-            renderView();
-        }
-
-        function handleEnter(e, dateKey) {
-            if (e.key === 'Enter') {
-                addTodoItem(dateKey);
-            }
-        }
-
-        function openTagModal(dateKey) {
-            activeDateKey = dateKey;
-            document.getElementById('tag-modal').classList.remove('hidden');
-        }
-
-        function closeTagModal() {
-            document.getElementById('tag-modal').classList.add('hidden');
-            activeDateKey = null;
-        }
+        function goToToday() { currentDate = new Date(); renderView(); }
+        function handleEnter(e, dateKey) { if (e.key === 'Enter') addTodoItem(dateKey); }
+        function openTagModal(dateKey) { activeDateKey = dateKey; document.getElementById('tag-modal').classList.remove('hidden'); }
+        function closeTagModal() { document.getElementById('tag-modal').classList.add('hidden'); activeDateKey = null; }
 
         function selectTag(tagName) {
             if (!activeDateKey) return;
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
-            
             data[activeDateKey].tags.push(tagName);
             localStorage.setItem('sdm_data', JSON.stringify(data));
             closeTagModal();
@@ -532,13 +521,18 @@
                 if (box) {
                     box.innerHTML = '';
                     const todos = data[dateKey].todos || [];
+                    let doneCount = todos.filter(i => i.done).length;
+                    
+                    const countEl = document.getElementById(`todo-count-${dateKey}`);
+                    if(countEl) countEl.innerText = `${doneCount}/${todos.length} 완료`;
+
                     todos.forEach(item => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = "flex items-center justify-between text-[11px] bg-slate-50 px-2 py-1 rounded border border-slate-100 group";
+                        itemDiv.className = "flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded border border-slate-200 group shadow-2xs";
                         itemDiv.innerHTML = `
-                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="더블클릭하여 수정">${item.text}</span>
+                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="클릭하여 완료/미완">${item.text}</span>
                             <div class="flex items-center gap-1">
-                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-indigo-600 text-[10px] font-bold">수정</button>
+                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-indigo-600 text-[10px]">수정</button>
                                 <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">×</button>
                             </div>
                         `;
@@ -605,13 +599,13 @@
             if (mode === 'keyboard') {
                 canvas.classList.remove('pen-active');
                 penTools.classList.add('hidden');
-                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium shadow-sm";
-                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+                btnKeyboard.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-medium shadow-sm";
+                btnPenMode.className = "px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200";
             } else {
                 canvas.classList.add('pen-active');
                 penTools.classList.remove('hidden');
-                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium shadow-sm";
-                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+                btnPenMode.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-medium shadow-sm";
+                btnKeyboard.className = "px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200";
             }
         }
 
@@ -619,11 +613,8 @@
             currentTool = tool;
             ['pen', 'highlighter', 'eraser'].forEach(t => {
                 const btn = document.getElementById(`btn-${t}`);
-                if(t === tool) {
-                    btn.className = "px-2.5 py-1 rounded bg-indigo-600 text-white text-[11px]";
-                } else {
-                    btn.className = "px-2.5 py-1 rounded bg-white border text-slate-600 text-[11px]";
-                }
+                if(t === tool) btn.className = "px-2 py-0.5 rounded bg-indigo-600 text-white text-[11px]";
+                else btn.className = "px-2 py-0.5 rounded bg-white border text-slate-600 text-[11px]";
             });
         }
 
@@ -674,15 +665,9 @@
             ctx.stroke();
         }
 
-        function stopDraw() {
-            isDrawing = false;
-            ctx.closePath();
-        }
-
+        function stopDraw() { isDrawing = false; ctx.closePath(); }
         function clearCanvas() {
-            if(confirm('필기 내용을 모두 지우시겠습니까?')) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
+            if(confirm('필기 내용을 모두 지우시겠습니까?')) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     </script>
 </body>
