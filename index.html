@@ -3,93 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나만의 스마트 다이어리</title>
-    <!-- Tailwind CSS CDN -->
+    <title>SDM · 업무 다이어리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Pretendard', sans-serif; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col items-center p-4 sm:p-6">
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col items-center p-3 sm:p-6">
 
-    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
-        <header class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
-            <h1 class="text-2xl font-bold text-slate-900">📖 스마트 다이어리</h1>
-            <span id="current-date" class="text-sm font-medium text-slate-500"></span>
+    <div class="w-full max-w-5xl bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+        <!-- 상단 헤더 -->
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-slate-100 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">📖 SDM · 업무 다이어리</h1>
+                <p class="text-xs text-slate-500 mt-1">나의 일정·업무·기록을 한곳에서 관리하세요</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="current-month-title" class="text-lg font-semibold text-slate-700">2026년 11월</span>
+                <div class="flex gap-1">
+                    <button onclick="changeMonth(-1)" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-sm">‹</button>
+                    <button onclick="changeMonth(1)" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-sm">›</button>
+                </div>
+            </div>
         </header>
 
-        <!-- 할 일 입력 섹션 -->
-        <section class="mb-8">
-            <h2 class="text-lg font-semibold mb-3 text-slate-700">오늘의 할 일</h2>
-            <div class="flex gap-2">
-                <input type="text" id="todo-input" placeholder="할 일을 입력하세요..." class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
-                <button onclick="addTodo()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition-colors">추가</button>
+        <!-- S펜 필기 툴바 영역 -->
+        <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-600">✍️ S펜 도구:</span>
+                <button onclick="setTool('pen')" id="btn-pen" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium">펜</button>
+                <button onclick="setTool('highlighter')" id="btn-highlighter" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium">형광펜</button>
+                <button onclick="setTool('eraser')" id="btn-eraser" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium">지우개</button>
             </div>
-            <ul id="todo-list" class="mt-4 space-y-2"></ul>
-        </section>
+            <div class="flex items-center gap-2">
+                <label class="text-xs text-slate-500">색상:</label>
+                <input type="color" id="pen-color" value="#4f46e5" class="w-8 h-8 rounded border border-slate-200 cursor-pointer">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-xs text-slate-500">굵기:</label>
+                <input type="range" id="pen-size" min="1" max="20" value="3" class="w-24">
+            </div>
+            <button onclick="clearCanvas()" class="ml-auto px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-medium hover:bg-rose-100">필기 초기화</button>
+        </div>
 
-        <!-- 일기 작성 섹션 -->
-        <section>
-            <h2 class="text-lg font-semibold mb-3 text-slate-700">오늘의 기록</h2>
-            <textarea id="diary-content" rows="6" placeholder="오늘 하루는 어땠나요? 자유롭게 적어보세요..." class="w-full p-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
-            <button onclick="saveDiary()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl text-sm transition-colors">일기 저장하기</button>
-        </section>
+        <!-- 캘린더 및 필기 캔버스 겹침 영역 -->
+        <div class="relative border border-slate-200 rounded-xl overflow-hidden bg-white">
+            <!-- 요일 헤더 -->
+            <div class="calendar-grid bg-slate-50 border-b border-slate-200 text-center text-xs font-semibold text-slate-500 py-2">
+                <div class="text-rose-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+            </div>
+            <!-- 날짜 그리드 -->
+            <div id="calendar-days" class="calendar-grid bg-slate-200 gap-[1px]"></div>
+
+            <!-- 갤럭시탭 S펜 필기를 위한 투명 캔버스 레이어 -->
+            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-auto cursor-crosshair z-10"></canvas>
+        </div>
     </div>
 
     <script>
-        // 오늘 날짜 표시
-        const dateOpt = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ko-KR', dateOpt);
+        let currentDate = new Date(2026, 10, 1); // 2026년 11월 기준
+        let currentTool = 'pen';
+        let isDrawing = false;
+        
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
 
-        // 로컬 데이터 불러오기
-        window.onload = function() {
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = () => {
+            resizeCanvas();
+            renderCalendar();
             loadTodos();
-            const savedDiary = localStorage.getItem('diary_text');
-            if (savedDiary) document.getElementById('diary-content').value = savedDiary;
         };
 
-        // 할 일 추가 함수
-        function addTodo() {
-            const input = document.getElementById('input'); // corrected selector fallback
-            // safe query selector
-            const inputField = document.getElementById('todo-input');
-            const text = inputField.value.trim();
-            if (!text) return;
+        function setTool(tool) {
+            currentTool = tool;
+            ['pen', 'highlighter', 'eraser'].forEach(t => {
+                const btn = document.getElementById(`btn-${t}`);
+                if(t === tool) {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+                }
+            });
+        }
 
-            const todos = JSON.parse(localStorage.getItem('todos') || '[]');
-            todos.push({ text, done: false });
-            localStorage.setItem('todos', JSON.stringify(todos));
+        // 캔버스 드로잉 (S펜 및 터치 지원)
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseleave', stopDraw);
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0]); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+        canvas.addEventListener('touchend', stopDraw);
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            const pos = getPos(e);
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            ctx.lineWidth = document.getElementById('pen-size').value;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'eraser') {
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.globalCompositeOperation = 'destination-out';
+            } else if (currentTool === 'highlighter') {
+                ctx.strokeStyle = document.getElementById('pen-color').value;
+                ctx.globalAlpha = 0.3;
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = Number(ctx.lineWidth) * 3;
+            } else {
+                ctx.strokeStyle = document.getElementById('pen-color').value;
+                ctx.globalAlpha = 1.0;
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        function clearCanvas() {
+            if(confirm('필기 내용을 모두 지우시겠습니까?')) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // 월간 캘린더 생성 함수
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            document.getElementById('current-month-title').innerText = `${year}년 ${month + 1}월`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const daysContainer = document.getElementById('calendar-days');
+            daysContainer.innerHTML = '';
+
+            // 빈 칸 채우기 (이전 달 여백)
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = "bg-white min-h-[120px] opacity-40";
+                daysContainer.appendChild(emptyDiv);
+            }
+
+            // 날짜별 칸 채우기
+            for (let day = 1; day <= totalDays; day++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayDiv = document.createElement('div');
+                dayDiv.className = "bg-white min-h-[130px] p-2 flex flex-col justify-between relative";
+                dayDiv.innerHTML = `
+                    <div class="text-xs font-bold text-slate-700 mb-1">${day}</div>
+                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[80px]" id="todo-box-${dateKey}"></div>
+                    <div class="flex gap-1">
+                        <input type="text" id="input-${dateKey}" placeholder="할 일 입력" class="w-full text-[11px] px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[11px] font-medium">+</button>
+                    </div>
+                `;
+                daysContainer.appendChild(dayDiv);
+            }
+            loadTodos();
+        }
+
+        function changeMonth(dir) {
+            currentDate.setMonth(currentDate.getMonth() + dir);
+            renderCalendar();
+        }
+
+        // 할 일 추가/수정/삭제 로직
+        function addTodoItem(dateKey) {
+            const inputField = document.getElementById(`input-${dateKey}`);
+            const text = inputField.value.trim();
+            if(!text) return;
+
+            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
+            if(!todos[dateKey]) todos[dateKey] = [];
+            todos[dateKey].push({ id: Date.now(), text, done: false });
+            localStorage.setItem('sdm_todos', JSON.stringify(todos));
             inputField.value = '';
             loadTodos();
         }
 
         function loadTodos() {
-            const list = document.getElementById('todo-list');
-            const todos = JSON.parse(localStorage.getItem('todos') || '[]');
-            list.innerHTML = '';
-            todos.forEach((todo, index) => {
-                const li = document.createElement('li');
-                li.className = "flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-sm";
-                li.innerHTML = `
-                    <span class="${todo.done ? 'line-through text-slate-400' : ''}">${todo.text}</span>
-                    <button onclick="deleteTodo(${index})" class="text-slate-400 hover:text-rose-500 text-xs font-medium">삭제</button>
-                `;
-                list.appendChild(li);
-            });
+            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
+            for (const dateKey in todos) {
+                const box = document.getElementById(`todo-box-${dateKey}`);
+                if (!box) continue;
+                box.innerHTML = '';
+                todos[dateKey].forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = "flex items-center justify-between text-[11px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 group";
+                    itemDiv.innerHTML = `
+                        <span class="truncate flex-1 ${item.done ? 'line-through text-slate-400' : 'text-slate-700'}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
+                        <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 ml-1">×</button>
+                    `;
+                    box.appendChild(itemDiv);
+                });
+            }
         }
 
-        function deleteTodo(index) {
-            const todos = JSON.parse(localStorage.getItem('todos') || '[]');
-            todos.splice(index, 1);
-            localStorage.setItem('todos', JSON.stringify(todos));
-            loadTodos();
+        function toggleTodo(dateKey, id) {
+            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
+            if(todos[dateKey]) {
+                todos[dateKey] = todos[dateKey].map(i => i.id === id ? {...i, done: !i.done} : i);
+                localStorage.setItem('sdm_todos', JSON.stringify(todos));
+                loadTodos();
+            }
         }
 
-        function saveDiary() {
-            const content = document.getElementById('diary-content').value;
-            localStorage.setItem('diary_text', content);
-            alert('일기가 성공적으로 저장되었습니다!');
+        function deleteTodoItem(dateKey, id) {
+            const todos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
+            if(todos[dateKey]) {
+                todos[dateKey] = todos[dateKey].filter(i => i.id !== id);
+                localStorage.setItem('sdm_todos', JSON.stringify(todos));
+                renderCalendar();
+            }
         }
     </script>
 </body>
