@@ -11,7 +11,6 @@
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         
-        /* 노트 줄무늬를 메모 입력 전용 구역에만 적용하고 간격을 30px로 정밀 일치 */
         .notebook-zone {
             background-color: #ffffff;
             background-image: linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
@@ -130,13 +129,31 @@
         </div>
     </div>
 
+    <!-- 할 일 하이라이트 색상 선택 모달팝업 -->
+    <div id="todo-color-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">일정 하이라이트 색상 선택</h3>
+                <button onclick="closeTodoColorModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="setTodoColor('bg-rose-50 text-rose-700 border-rose-200')" class="p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs">🔴 중요 / 긴급</button>
+                <button onclick="setTodoColor('bg-amber-50 text-amber-700 border-amber-200')" class="p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs">🟡 주의 / 회의</button>
+                <button onclick="setTodoColor('bg-emerald-50 text-emerald-700 border-emerald-200')" class="p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs">🟢 업무 / 완료</button>
+                <button onclick="setTodoColor('bg-indigo-50 text-indigo-700 border-indigo-200')" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-xs">🔵 일반 / 기타</button>
+                <button onclick="setTodoColor('bg-white text-slate-700 border-slate-100')" class="col-span-2 p-2.5 rounded-xl bg-white text-slate-600 border border-slate-200 font-bold text-xs">⚪ 기본 (배경 없음)</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentView = 'monthly';
-        let currentDate = new Date(); // 기본 날짜를 오늘로 설정
+        let currentDate = new Date();
         let currentTool = 'pen';
         let isDrawing = false;
         let activeDateKey = null;
         let activeMinuteId = null;
+        let activeTodoEditTarget = null; // {dateKey, id}
         
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
@@ -153,8 +170,6 @@
 
         function switchView(view) {
             currentView = view;
-            
-            // 일간 뷰로 전환할 때 오늘 날짜가 바로 뜨도록 설정
             if (view === 'daily') {
                 currentDate = new Date();
             }
@@ -188,7 +203,7 @@
             loadTodos();
         }
 
-        // --- 월간 뷰 (월요일 시작 기준 정렬) ---
+        // --- 월간 뷰 ---
         function createMonthlyCellHTML(year, month, day, dateKey) {
             return `
                 <div class="bg-white min-h-[180px] p-2.5 flex flex-col justify-between relative border border-slate-200">
@@ -214,8 +229,7 @@
             document.getElementById('current-date-title').innerText = `${year}년 ${month + 1}월`;
 
             const firstDayObj = new Date(year, month, 1);
-            let firstDayIndex = firstDayObj.getDay(); // 0(일) ~ 6(토)
-            // 월요일 시작(0:월요일 ~ 6:일요일)으로 변환
+            let firstDayIndex = firstDayObj.getDay();
             firstDayIndex = (firstDayIndex + 6) % 7;
 
             const totalDays = new Date(year, month + 1, 0).getDate();
@@ -253,7 +267,7 @@
             switchView('daily');
         }
 
-        // --- 주간 뷰 (월요일부터 시작하도록 순서 변경) ---
+        // --- 주간 뷰 ---
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
                 <div class="p-5 flex flex-col justify-between min-h-[460px] border-r border-b border-slate-200 bg-white">
@@ -267,7 +281,7 @@
                     
                     <div class="flex-1 flex flex-col justify-between space-y-3 my-1">
                         <div>
-                            <div class="space-y-1 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-1">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                 <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2 rounded-none text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
@@ -292,8 +306,7 @@
 
         function renderWeekly() {
             const curr = new Date(currentDate);
-            let dayOfWeek = curr.getDay(); // 0(일) ~ 6(토)
-            // 월요일을 주의 시작(0)으로 맞추기 위한 계산
+            let dayOfWeek = curr.getDay();
             let distanceToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
             
             const firstday = new Date(curr);
@@ -547,7 +560,8 @@
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             if(!data[dateKey].todos) data[dateKey].todos = [];
 
-            data[dateKey].todos.push({ id: Date.now(), text, done: false });
+            // 기본 스타일 클래스 부여 (기본은 일반 배경 없음)
+            data[dateKey].todos.push({ id: Date.now(), text, done: false, style: 'bg-white text-slate-700 border-slate-100' });
             localStorage.setItem('sdm_data', JSON.stringify(data));
             inputField.value = '';
             loadTodos();
@@ -574,12 +588,14 @@
 
                     todos.forEach(item => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = "flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded group border border-slate-100";
+                        const customStyle = item.style || 'bg-white text-slate-700 border-slate-100';
+                        itemDiv.className = `flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg border transition-all ${customStyle}`;
                         itemDiv.innerHTML = `
-                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="클릭하여 완료/미완">☐ ${item.text}</span>
-                            <div class="flex items-center gap-1">
-                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-indigo-600 text-[10px]">수정</button>
-                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">×</button>
+                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : 'font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" title="클릭하여 완료/미완">☐ ${item.text}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="openTodoColorModal('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 font-bold" title="색상 변경">🎨</button>
+                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100">수정</button>
+                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-xs opacity-60 hover:opacity-100 font-bold">×</button>
                             </div>
                         `;
                         box.appendChild(itemDiv);
@@ -639,6 +655,32 @@
             }
         }
 
+        // --- 일정 하이라이트 색상 변경 모달 제어 ---
+        function openTodoColorModal(dateKey, id) {
+            activeTodoEditTarget = { dateKey, id };
+            document.getElementById('todo-color-modal').classList.remove('hidden');
+        }
+
+        function closeTodoColorModal() {
+            document.getElementById('todo-color-modal').classList.add('hidden');
+            activeTodoEditTarget = null;
+        }
+
+        function setTodoColor(styleClass) {
+            if (!activeTodoEditTarget) return;
+            const { dateKey, id } = activeTodoEditTarget;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                const target = data[dateKey].todos.find(i => i.id === id);
+                if (target) {
+                    target.style = styleClass;
+                    localStorage.setItem('sdm_data', JSON.stringify(data));
+                    loadTodos();
+                }
+            }
+            closeTodoColorModal();
+        }
+
         function editTodoItem(dateKey, id) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].todos) {
@@ -689,31 +731,20 @@
             });
         }
 
-        canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDraw);
-        canvas.addEventListener('mouseleave', stopDraw);
-
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0]); });
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
-        canvas.addEventListener('touchend', stopDraw);
-
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        }
-
-        function startDraw(e) {
-            if (!canvas.classList.contains('pen-active')) return;
+        canvas.addEventListener('pointerdown', (e) => {
+            if (e.pointerType !== 'pen' || !canvas.classList.contains('pen-active')) return;
             isDrawing = true;
             ctx.beginPath();
-            const pos = getPos(e);
-            ctx.moveTo(pos.x, pos.y);
-        }
+            const rect = canvas.getBoundingClientRect();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        });
 
-        function draw(e) {
-            if (!isDrawing || !canvas.classList.contains('pen-active')) return;
-            const pos = getPos(e);
+        canvas.addEventListener('pointermove', (e) => {
+            if (!isDrawing || e.pointerType !== 'pen' || !canvas.classList.contains('pen-active')) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
             ctx.lineWidth = document.getElementById('pen-size').value;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
@@ -732,11 +763,18 @@
                 ctx.globalCompositeOperation = 'source-over';
             }
 
-            ctx.lineTo(pos.x, pos.y);
+            ctx.lineTo(x, y);
             ctx.stroke();
+        });
+
+        canvas.addEventListener('pointerup', stopDraw);
+        canvas.addEventListener('pointerleave', stopDraw);
+
+        function stopDraw() { 
+            isDrawing = false; 
+            ctx.closePath(); 
         }
 
-        function stopDraw() { isDrawing = false; ctx.closePath(); }
         function clearCanvas() {
             if(confirm('필기 내용을 모두 지우시겠습니까?')) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
