@@ -15,6 +15,11 @@
             background-image: linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
             background-size: 100% 30px;
         }
+        /* 노트 줄과 입력창 줄 간격을 30px로 완벽 일치 */
+        .notebook-textarea {
+            line-height: 30px !important;
+            background-image: none !important;
+        }
         #drawing-canvas { pointer-events: none; }
         #drawing-canvas.pen-active { pointer-events: auto; }
     </style>
@@ -233,7 +238,7 @@
             switchView('daily');
         }
 
-        // --- 주간 뷰 (사각 박스, 회의록 연동 포함) ---
+        // --- 주간 뷰 (줄 높이 30px 정확히 일치) ---
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
                 <div class="p-5 flex flex-col justify-between clean-notebook min-h-[440px] border-r border-b border-slate-200 bg-white">
@@ -255,7 +260,7 @@
                         </div>
 
                         <div class="pt-1">
-                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-24 text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none"></textarea>
+                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-28 text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
                         </div>
 
                         <!-- 회의록 연동 영역 -->
@@ -338,10 +343,10 @@
                     
                     <div class="flex flex-wrap gap-1.5 pb-2" id="tags-box-${dateKey}"></div>
 
-                    <!-- 메모 작성란 -->
+                    <!-- 메모 작성란 (줄 높이 30px 적용) -->
                     <div class="space-y-2">
                         <div class="text-xs font-bold text-slate-500">일일 메모</div>
-                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-36 text-sm p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none"></textarea>
+                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-40 text-sm p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
                     </div>
 
                     <!-- 할 일 체크리스트 영역 -->
@@ -444,7 +449,7 @@
             const newM = { id: Date.now(), title: '새로운 회의록', date: new Date().toISOString().split('T')[0], attendees: '', content: '', actions: '' };
             minutes.unshift(newM);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
-            activeMinuteId = newM.id;
+            activeMinuteId = m.id;
             renderMinutes();
         }
 
