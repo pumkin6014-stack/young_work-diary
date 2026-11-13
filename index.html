@@ -112,7 +112,7 @@
         </div>
     </div>
 
-    <!-- 근무 태그 선택 모달팝업 ('교육' 추가됨) -->
+    <!-- 근무 태그 선택 모달팝업 -->
     <div id="tag-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -125,12 +125,27 @@
                 <button onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 font-bold text-xs hover:bg-teal-100">시간외1.5</button>
                 <button onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-cyan-50 text-cyan-700 border border-cyan-200 font-bold text-xs hover:bg-cyan-100">시간외2</button>
                 <button onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 font-bold text-xs hover:bg-purple-100">교육</button>
-                <button onclick="selectTag('휴가')" class="p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
+                <button onclick="selectTag('휴가')" class="col-span-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
             </div>
         </div>
     </div>
 
-    <!-- 일정 하이라이트 색상 선택 모달팝업 (3가지로 재구성) -->
+    <!-- 조리사휴가 태그 선택 모달팝업 (신규 추가) -->
+    <div id="chef-vacation-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">조리사휴가 선택</h3>
+                <button onclick="closeChefModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <div class="grid grid-cols-1 gap-2">
+                <button onclick="selectChefTag('김대성')" class="p-3 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 font-bold text-xs hover:bg-sky-100 text-left">김대성</button>
+                <button onclick="selectChefTag('최정란')" class="p-3 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 font-bold text-xs hover:bg-sky-100 text-left">최정란</button>
+                <button onclick="selectChefTag('주간보호')" class="p-3 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 font-bold text-xs hover:bg-sky-100 text-left">주간보호</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 일정 하이라이트 유형 선택 모달팝업 -->
     <div id="todo-color-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -145,6 +160,10 @@
                 <button onclick="setTodoColor('bg-amber-50 text-amber-700 border-amber-200')" class="p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs text-left flex items-center justify-between">
                     <span>🟡 업무 요청</span>
                     <span class="text-[10px] opacity-70">노란색</span>
+                </button>
+                <button onclick="setTodoColor('bg-emerald-50 text-emerald-700 border-emerald-200')" class="p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs text-left flex items-center justify-between">
+                    <span>🟢 공지</span>
+                    <span class="text-[10px] opacity-70">초록색</span>
                 </button>
                 <button onclick="setTodoColor('bg-white text-slate-700 border-slate-100')" class="p-3 rounded-xl bg-white text-slate-600 border border-slate-200 font-bold text-xs text-left flex items-center justify-between">
                     <span>⚪ 기본</span>
@@ -218,7 +237,10 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-800 cursor-pointer hover:text-indigo-600">${day}</span>
-                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
+                            <div class="flex items-center gap-1">
+                                <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold">+ 조리사휴가</button>
+                                <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
+                            </div>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-1" id="tags-box-${dateKey}"></div>
                     </div>
@@ -282,7 +304,10 @@
                     <div>
                         <div class="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-200">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold text-slate-900 cursor-pointer hover:text-indigo-600">${dayTitle}</span>
-                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
+                            <div class="flex items-center gap-1">
+                                <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold">+ 조리사휴가</button>
+                                <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
+                            </div>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-2" id="tags-box-${dateKey}"></div>
                     </div>
@@ -386,7 +411,10 @@
                             <h2 class="text-xl font-bold ${titleColorClass}">${month}월 ${day}일 ${dayName}요일</h2>
                             <div class="text-xs font-bold text-slate-500 mt-1">나의 일정 · 메모</div>
                         </div>
-                        <button onclick="openTagModal('${dateKey}')" class="px-3 py-1.5 rounded bg-slate-100 text-indigo-700 font-bold text-xs border border-slate-200 hover:bg-indigo-50">+ 근무 태그 추가</button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openChefModal('${dateKey}')" class="px-3 py-1.5 rounded bg-sky-50 text-sky-700 font-bold text-xs border border-sky-200 hover:bg-sky-100">+ 조리사휴가 추가</button>
+                            <button onclick="openTagModal('${dateKey}')" class="px-3 py-1.5 rounded bg-slate-100 text-indigo-700 font-bold text-xs border border-slate-200 hover:bg-indigo-50">+ 근무 태그 추가</button>
+                        </div>
                     </div>
                     
                     <div class="flex flex-wrap gap-1.5 pb-2 shrink-0" id="tags-box-${dateKey}"></div>
@@ -535,6 +563,8 @@
 
         function goToToday() { currentDate = new Date(); renderView(); }
         function handleEnter(e, dateKey) { if (e.key === 'Enter') addTodoItem(dateKey); }
+        
+        // 태그 모달 관련
         function openTagModal(dateKey) { activeDateKey = dateKey; document.getElementById('tag-modal').classList.remove('hidden'); }
         function closeTagModal() { document.getElementById('tag-modal').classList.add('hidden'); activeDateKey = null; }
 
@@ -546,6 +576,22 @@
             data[activeDateKey].tags.push(tagName);
             localStorage.setItem('sdm_data', JSON.stringify(data));
             closeTagModal();
+            loadTodos();
+        }
+
+        // 조리사휴가 모달 관련
+        function openChefModal(dateKey) { activeDateKey = dateKey; document.getElementById('chef-vacation-modal').classList.remove('hidden'); }
+        function closeChefModal() { document.getElementById('chef-vacation-modal').classList.add('hidden'); activeDateKey = null; }
+
+        function selectChefTag(chefName) {
+            if (!activeDateKey) return;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
+            if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
+            // 구분하기 쉽게 '조리사: 이름' 또는 이름 형태로 저장
+            data[activeDateKey].tags.push(`조리사: ${chefName}`);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            closeChefModal();
             loadTodos();
         }
 
@@ -620,8 +666,13 @@
                     const tags = data[dateKey].tags || [];
                     tags.forEach((tag, idx) => {
                         const tagSpan = document.createElement('span');
-                        tagSpan.className = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 mr-1 mb-1";
-                        tagSpan.innerHTML = `${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 text-indigo-400 hover:text-rose-500">×</button>`;
+                        // 조리사휴가 태그인 경우 하늘색 계열 스타일 적용
+                        let tagStyle = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 mr-1 mb-1";
+                        if (tag.includes('조리사')) {
+                            tagStyle = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 mr-1 mb-1";
+                        }
+                        tagSpan.className = tagStyle;
+                        tagSpan.innerHTML = `${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 opacity-60 hover:opacity-100">×</button>`;
                         tagsBox.appendChild(tagSpan);
                     });
                 }
