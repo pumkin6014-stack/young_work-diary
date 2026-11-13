@@ -114,13 +114,13 @@
             loadTodos();
         }
 
-        // 공통 날짜 셀 생성 헬퍼 (FD, 시간외, 휴가 태그 표시용 컨테이너 포함)
-        function createDayCellHTML(day, dateKey, minHeight = "min-h-[160px]") {
+        // 공통 날짜 셀 생성 헬퍼 (근무 태그 버튼 및 입력창 포함)
+        function createDayCellHTML(dayTitle, dateKey, minHeight = "min-h-[160px]") {
             return `
                 <div class="bg-white ${minHeight} p-2 flex flex-col justify-between relative hover:bg-slate-50/50">
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-bold text-slate-700">${day}</span>
+                            <span class="text-xs font-bold text-slate-700">${dayTitle}</span>
                             <div class="flex flex-wrap gap-0.5 justify-end" id="tags-box-${dateKey}"></div>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-1.5">
@@ -261,7 +261,7 @@
             }
         }
 
-        // 근무 태그 (FD, 시간외 등) 추가/삭제 로직
+        // 근무 태그 추가/삭제 로직
         function addTag(dateKey, tagName) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [] };
@@ -281,7 +281,7 @@
             }
         }
 
-        // 할 일 관리 (추가, 수정, 삭제) - localStorage 구조 업그레이드 호환
+        // 할 일 관리 (추가, 수정, 삭제)
         function addTodoItem(dateKey) {
             const inputField = document.getElementById(`input-${dateKey}`);
             if (!inputField) return;
@@ -299,7 +299,6 @@
         }
 
         function loadTodos() {
-            // 구버전 sdm_todos 호환 처리
             const oldTodos = JSON.parse(localStorage.getItem('sdm_todos') || '{}');
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             
@@ -309,7 +308,6 @@
             }
 
             for (const dateKey in data) {
-                // 1. 할 일 목록 렌더링
                 const box = document.getElementById(`todo-box-${dateKey}`);
                 if (box) {
                     box.innerHTML = '';
@@ -320,7 +318,7 @@
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="더블클릭하여 수정">${item.text}</span>
                             <div class="flex items-center gap-1">
-                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-slate-300 hover:text-indigo-600 text-[10px] hidden group-hover:inline">수정</button>
+                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-indigo-600 text-[10px] font-bold">수정</button>
                                 <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">×</button>
                             </div>
                         `;
@@ -328,7 +326,6 @@
                     });
                 }
 
-                // 2. 태그(FD, 시간외 등) 목록 렌더링
                 const tagsBox = document.getElementById(`tags-box-${dateKey}`);
                 if (tagsBox) {
                     tagsBox.innerHTML = '';
@@ -352,7 +349,6 @@
             }
         }
 
-        // 할 일 수정 기능
         function editTodoItem(dateKey, id) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].todos) {
@@ -429,42 +425,3 @@
             const pos = getPos(e);
             ctx.moveTo(pos.x, pos.y);
         }
-
-        function draw(e) {
-            if (!isDrawing || !canvas.classList.contains('pen-active')) return;
-            const pos = getPos(e);
-            ctx.lineWidth = document.getElementById('pen-size').value;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            if (currentTool === 'eraser') {
-                ctx.strokeStyle = 'rgba(0,0,0,1)';
-                ctx.globalCompositeOperation = 'destination-out';
-            } else if (currentTool === 'highlighter') {
-                ctx.strokeStyle = document.getElementById('pen-color').value;
-                ctx.globalAlpha = 0.3;
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.lineWidth = Number(ctx.lineWidth) * 3;
-            } else {
-                ctx.strokeStyle = document.getElementById('pen-color').value;
-                ctx.globalAlpha = 1.0;
-                ctx.globalCompositeOperation = 'source-over';
-            }
-
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-        }
-
-        function stopDraw() {
-            isDrawing = false;
-            ctx.closePath();
-        }
-
-        function clearCanvas() {
-            if(confirm('필기 내용을 모두 지우시겠습니까?')) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        }
-    </script>
-</body>
-</html>
