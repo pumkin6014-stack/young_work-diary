@@ -38,13 +38,13 @@
         <!-- 좌측 사이드 네비게이션 바 -->
         <aside class="w-16 sm:w-20 bg-slate-900 text-white flex flex-col items-center py-5 justify-between shrink-0 select-none">
             <div class="flex flex-col items-center space-y-6">
-                <div class="text-[10px] font-black tracking-widest text-slate-400">SDM</div>
+                <div class="text-[10px] font-black tracking-widest text-slate-400 opacity-0">SDM</div>
                 <div class="space-y-3 w-full px-2">
-                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
+                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm">
                         <span class="text-xs font-bold">M</span>
                         <span class="text-[9px] mt-0.5">월간</span>
                     </button>
-                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm">
+                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
                         <span class="text-xs font-bold">W</span>
                         <span class="text-[9px] mt-0.5">주간</span>
                     </button>
@@ -70,13 +70,13 @@
             <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0">
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">주간 다이어리</h1>
+                        <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3">
                     <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                        <span id="current-date-title" class="text-sm font-bold text-slate-700">11월 15일 ~ 11월 21일</span>
+                        <span id="current-date-title" class="text-sm font-bold text-slate-700">2026년 11월</span>
                         <div class="flex gap-1">
                             <button onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold">‹</button>
                             <button onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold">›</button>
@@ -131,7 +131,8 @@
     </div>
 
     <script>
-        let currentView = 'weekly';
+        // 처음 접속 시 월간(monthly) 뷰가 기본으로 뜨도록 수정
+        let currentView = 'monthly';
         let currentDate = new Date(2026, 10, 15);
         let currentTool = 'pen';
         let isDrawing = false;
@@ -325,7 +326,7 @@
             document.getElementById('view-container').innerHTML = html;
         }
 
-        // --- 일간 뷰 (날짜 밑에 나의 일정·메모 배치) ---
+        // --- 일간 뷰 ---
         function renderDaily() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
@@ -480,7 +481,7 @@
         function deleteMinute(id) {
             if(!confirm('이 회의록을 삭제하시겠습니까?')) return;
             let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-            minutes = minutes.permissions ? minutes : minutes.filter(m => m.id !== id);
+            minutes = minutes.filter(m => m.id !== id);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
             renderMinutes();
