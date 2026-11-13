@@ -67,9 +67,12 @@
             
             <!-- 상단 헤더 영역 -->
             <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
+                <div class="flex items-center gap-3">
+                    <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
+                    <!-- 검색 기능 추가 -->
+                    <div class="relative">
+                        <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="다이어리 내용 검색..." class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 pl-8 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-40 sm:w-56">
+                        <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
                     </div>
                 </div>
 
@@ -130,7 +133,7 @@
         </div>
     </div>
 
-    <!-- 조리사휴가 태그 선택 모달팝업 (신규 추가) -->
+    <!-- 조리사휴가 태그 선택 모달팝업 -->
     <div id="chef-vacation-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -181,6 +184,7 @@
         let activeDateKey = null;
         let activeMinuteId = null;
         let activeTodoEditTarget = null;
+        let searchQuery = '';
         
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
@@ -237,17 +241,22 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-800 cursor-pointer hover:text-indigo-600">${day}</span>
-                            <div class="flex items-center gap-1">
-                                <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold">+ 조리사휴가</button>
-                                <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
-                            </div>
                         </div>
+                        <!-- 태그들이 입력창 위쪽에 정렬되도록 배치 -->
                         <div class="flex flex-wrap gap-1 mb-1" id="tags-box-${dateKey}"></div>
                     </div>
                     <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px]" id="todo-box-${dateKey}"></div>
-                    <div class="flex gap-1 z-30">
-                        <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border-0 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-none text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
+                    
+                    <!-- 할 일 입력창 및 하단 버튼 영역 -->
+                    <div class="space-y-1 z-30">
+                        <div class="flex gap-1">
+                            <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
+                        </div>
+                        <div class="flex items-center justify-between gap-1 pt-0.5">
+                            <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold border border-sky-100">+ 조리사휴가</button>
+                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-500 hover:bg-slate-100 font-semibold border border-slate-200">+ 근무</button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -300,14 +309,10 @@
         // --- 주간 뷰 ---
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
-                <div class="p-5 flex flex-col justify-between min-h-[460px] border-r border-b border-slate-200 bg-white">
+                <div class="p-5 flex flex-col justify-between min-h-[480px] border-r border-b border-slate-200 bg-white">
                     <div>
                         <div class="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-200">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold text-slate-900 cursor-pointer hover:text-indigo-600">${dayTitle}</span>
-                            <div class="flex items-center gap-1">
-                                <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold">+ 조리사휴가</button>
-                                <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
-                            </div>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-2" id="tags-box-${dateKey}"></div>
                     </div>
@@ -315,9 +320,15 @@
                     <div class="flex-1 flex flex-col justify-between space-y-3 my-1">
                         <div>
                             <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
-                            <div class="flex gap-1">
-                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2 rounded-none text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
+                            <div class="space-y-1.5">
+                                <div class="flex gap-1">
+                                    <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2 rounded text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
+                                </div>
+                                <div class="flex items-center justify-between gap-1">
+                                    <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold border border-sky-100">+ 조리사휴가</button>
+                                    <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded bg-slate-50 text-slate-500 hover:bg-slate-100 font-semibold border border-slate-200">+ 근무</button>
+                                </div>
                             </div>
                         </div>
 
@@ -372,7 +383,7 @@
             }
 
             let emptyCardHTML = `
-                <div class="min-h-[460px] border-r border-b border-slate-200 bg-white/50"></div>
+                <div class="min-h-[480px] border-r border-b border-slate-200 bg-white/50"></div>
             `;
 
             let html = `
@@ -564,6 +575,12 @@
         function goToToday() { currentDate = new Date(); renderView(); }
         function handleEnter(e, dateKey) { if (e.key === 'Enter') addTodoItem(dateKey); }
         
+        // 검색 핸들러
+        function handleSearch(query) {
+            searchQuery = query.trim().toLowerCase();
+            loadTodos();
+        }
+        
         // 태그 모달 관련
         function openTagModal(dateKey) { activeDateKey = dateKey; document.getElementById('tag-modal').classList.remove('hidden'); }
         function closeTagModal() { document.getElementById('tag-modal').classList.add('hidden'); activeDateKey = null; }
@@ -586,9 +603,9 @@
         function selectChefTag(chefName) {
             if (!activeDateKey) return;
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[activeDateKey]) data[data[dateKey]] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
             if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
-            // 구분하기 쉽게 '조리사: 이름' 또는 이름 형태로 저장
             data[activeDateKey].tags.push(`조리사: ${chefName}`);
             localStorage.setItem('sdm_data', JSON.stringify(data));
             closeChefModal();
@@ -639,16 +656,21 @@
                     box.innerHTML = '';
                     const todos = data[dateKey].todos || [];
 
-                    todos.forEach(item => {
+                    todos.forEach((item, index) => {
+                        // 검색어 필터링 적용
+                        const isMatched = !searchQuery || item.text.toLowerCase().includes(searchQuery) || (data[dateKey].memo && data[dateKey].memo.toLowerCase().includes(searchQuery));
+                        
                         const itemDiv = document.createElement('div');
                         const customStyle = item.style || 'bg-white text-slate-700 border-slate-100';
-                        itemDiv.className = `flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg border transition-all ${customStyle}`;
+                        itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border transition-all ${customStyle} ${searchQuery && !isMatched ? 'opacity-20' : ''}`;
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : 'font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" title="클릭하여 완료/미완">☐ ${item.text}</span>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <button onclick="openTodoColorModal('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 font-bold" title="유형 변경">🎨</button>
-                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100">수정</button>
-                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-xs opacity-60 hover:opacity-100 font-bold">×</button>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="moveTodoOrder('${dateKey}', ${index}, -1)" class="text-[9px] opacity-60 hover:opacity-100 px-0.5" title="위로 이동">▲</button>
+                                <button onclick="moveTodoOrder('${dateKey}', ${index}, 1)" class="text-[9px] opacity-60 hover:opacity-100 px-0.5" title="아래로 이동">▼</button>
+                                <button onclick="openTodoColorModal('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 font-bold px-0.5" title="유형 변경">🎨</button>
+                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 px-0.5">수정</button>
+                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-xs opacity-60 hover:opacity-100 font-bold px-0.5">×</button>
                             </div>
                         `;
                         box.appendChild(itemDiv);
@@ -666,7 +688,6 @@
                     const tags = data[dateKey].tags || [];
                     tags.forEach((tag, idx) => {
                         const tagSpan = document.createElement('span');
-                        // 조리사휴가 태그인 경우 하늘색 계열 스타일 적용
                         let tagStyle = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 mr-1 mb-1";
                         if (tag.includes('조리사')) {
                             tagStyle = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 mr-1 mb-1";
@@ -702,6 +723,24 @@
                     }
                 }
             });
+        }
+
+        // 할 일 순서 위/아래 이동 함수
+        function moveTodoOrder(dateKey, index, direction) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                const todos = data[dateKey].todos;
+                const targetIndex = index + direction;
+                if (targetIndex < 0 || targetIndex >= todos.length) return; // 범위를 벗어나면 무시
+                
+                // 위치 교환(스왑)
+                const temp = todos[index];
+                todos[index] = todos[targetIndex];
+                todos[targetIndex] = temp;
+
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
         }
 
         function toggleTodo(dateKey, id) {
