@@ -112,7 +112,7 @@
         </div>
     </div>
 
-    <!-- 근무 태그 선택 모달팝업 -->
+    <!-- 근무 태그 선택 모달팝업 ('교육' 추가됨) -->
     <div id="tag-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -124,24 +124,32 @@
                 <button onclick="selectTag('시간외1')" class="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs hover:bg-emerald-100">시간외1</button>
                 <button onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 font-bold text-xs hover:bg-teal-100">시간외1.5</button>
                 <button onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-cyan-50 text-cyan-700 border border-cyan-200 font-bold text-xs hover:bg-cyan-100">시간외2</button>
-                <button onclick="selectTag('휴가')" class="col-span-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
+                <button onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 font-bold text-xs hover:bg-purple-100">교육</button>
+                <button onclick="selectTag('휴가')" class="p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
             </div>
         </div>
     </div>
 
-    <!-- 할 일 하이라이트 색상 선택 모달팝업 -->
+    <!-- 일정 하이라이트 색상 선택 모달팝업 (3가지로 재구성) -->
     <div id="todo-color-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-slate-800 text-sm">일정 하이라이트 색상 선택</h3>
+                <h3 class="font-bold text-slate-800 text-sm">일정 하이라이트 유형 선택</h3>
                 <button onclick="closeTodoColorModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="setTodoColor('bg-rose-50 text-rose-700 border-rose-200')" class="p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs">🔴 중요 / 긴급</button>
-                <button onclick="setTodoColor('bg-amber-50 text-amber-700 border-amber-200')" class="p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs">🟡 주의 / 회의</button>
-                <button onclick="setTodoColor('bg-emerald-50 text-emerald-700 border-emerald-200')" class="p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs">🟢 업무 / 완료</button>
-                <button onclick="setTodoColor('bg-indigo-50 text-indigo-700 border-indigo-200')" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-xs">🔵 일반 / 기타</button>
-                <button onclick="setTodoColor('bg-white text-slate-700 border-slate-100')" class="col-span-2 p-2.5 rounded-xl bg-white text-slate-600 border border-slate-200 font-bold text-xs">⚪ 기본 (배경 없음)</button>
+            <div class="grid grid-cols-1 gap-2">
+                <button onclick="setTodoColor('bg-rose-50 text-rose-700 border-rose-200')" class="p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs text-left flex items-center justify-between">
+                    <span>🔴 회의 & 교육</span>
+                    <span class="text-[10px] opacity-70">빨간색</span>
+                </button>
+                <button onclick="setTodoColor('bg-amber-50 text-amber-700 border-amber-200')" class="p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs text-left flex items-center justify-between">
+                    <span>🟡 업무 요청</span>
+                    <span class="text-[10px] opacity-70">노란색</span>
+                </button>
+                <button onclick="setTodoColor('bg-white text-slate-700 border-slate-100')" class="p-3 rounded-xl bg-white text-slate-600 border border-slate-200 font-bold text-xs text-left flex items-center justify-between">
+                    <span>⚪ 기본</span>
+                    <span class="text-[10px] opacity-70">배경 없음</span>
+                </button>
             </div>
         </div>
     </div>
@@ -153,7 +161,7 @@
         let isDrawing = false;
         let activeDateKey = null;
         let activeMinuteId = null;
-        let activeTodoEditTarget = null; // {dateKey, id}
+        let activeTodoEditTarget = null;
         
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
@@ -560,7 +568,6 @@
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             if(!data[dateKey].todos) data[dateKey].todos = [];
 
-            // 기본 스타일 클래스 부여 (기본은 일반 배경 없음)
             data[dateKey].todos.push({ id: Date.now(), text, done: false, style: 'bg-white text-slate-700 border-slate-100' });
             localStorage.setItem('sdm_data', JSON.stringify(data));
             inputField.value = '';
@@ -593,7 +600,7 @@
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : 'font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" title="클릭하여 완료/미완">☐ ${item.text}</span>
                             <div class="flex items-center gap-1.5 shrink-0">
-                                <button onclick="openTodoColorModal('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 font-bold" title="색상 변경">🎨</button>
+                                <button onclick="openTodoColorModal('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100 font-bold" title="유형 변경">🎨</button>
                                 <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-[10px] opacity-60 hover:opacity-100">수정</button>
                                 <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-xs opacity-60 hover:opacity-100 font-bold">×</button>
                             </div>
@@ -655,7 +662,7 @@
             }
         }
 
-        // --- 일정 하이라이트 색상 변경 모달 제어 ---
+        // --- 일정 하이라이트 유형 선택 모달 제어 ---
         function openTodoColorModal(dateKey, id) {
             activeTodoEditTarget = { dateKey, id };
             document.getElementById('todo-color-modal').classList.remove('hidden');
