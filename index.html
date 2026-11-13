@@ -22,26 +22,26 @@
 <body class="min-h-screen text-slate-800 flex flex-col p-2 sm:p-4">
 
     <!-- 전체 화면 꽉 채우는 레이아웃 컨테이너 -->
-    <div class="flex-1 flex bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+    <div class="flex-1 flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
         
         <!-- 좌측 사이드 네비게이션 바 -->
         <aside class="w-16 sm:w-20 bg-slate-900 text-white flex flex-col items-center py-5 justify-between shrink-0 select-none">
             <div class="flex flex-col items-center space-y-6">
                 <div class="text-[10px] font-black tracking-widest text-slate-400">SDM</div>
                 <div class="space-y-3 w-full px-2">
-                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
+                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
                         <span class="text-xs font-bold">M</span>
                         <span class="text-[9px] mt-0.5">월간</span>
                     </button>
-                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm">
+                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm">
                         <span class="text-xs font-bold">W</span>
                         <span class="text-[9px] mt-0.5">주간</span>
                     </button>
-                    <button onclick="switchView('daily')" id="tab-daily" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
+                    <button onclick="switchView('daily')" id="tab-daily" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
                         <span class="text-xs font-bold">D</span>
                         <span class="text-[9px] mt-0.5">일간</span>
                     </button>
-                    <button onclick="switchView('minutes')" id="tab-minutes" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
+                    <button onclick="switchView('minutes')" id="tab-minutes" class="w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all">
                         <span class="text-xs font-bold">N</span>
                         <span class="text-[9px] mt-0.5">회의록</span>
                     </button>
@@ -98,7 +98,7 @@
             </div>
 
             <!-- 스크롤 가능한 본문 영역 -->
-            <div class="flex-1 overflow-y-auto relative p-4 sm:p-6" id="view-container"></div>
+            <div class="flex-1 overflow-y-auto relative p-0" id="view-container"></div>
             <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none"></canvas>
         </div>
     </div>
@@ -147,9 +147,9 @@
                 const btn = document.getElementById(`tab-${v}`);
                 if(btn) {
                     if(v === view) {
-                        btn.className = "w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm";
+                        btn.className = "w-full py-2.5 rounded-lg flex flex-col items-center justify-center bg-indigo-600 text-white shadow-sm";
                     } else {
-                        btn.className = "w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all";
+                        btn.className = "w-full py-2.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:bg-slate-800 transition-all";
                     }
                 }
             });
@@ -175,7 +175,7 @@
         // --- 월간 뷰 ---
         function createMonthlyCellHTML(year, month, day, dateKey) {
             return `
-                <div class="bg-white min-h-[180px] p-2.5 flex flex-col justify-between relative border border-slate-100 rounded-xl shadow-2xs hover:border-slate-200">
+                <div class="bg-white min-h-[180px] p-2.5 flex flex-col justify-between relative border border-slate-200">
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-800 cursor-pointer hover:text-indigo-600">${day}</span>
@@ -185,8 +185,8 @@
                     </div>
                     <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px]" id="todo-box-${dateKey}"></div>
                     <div class="flex gap-1 z-30">
-                        <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border-0 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
+                        <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border-0 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-none text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
                     </div>
                 </div>
             `;
@@ -202,15 +202,15 @@
             const prevTotalDays = new Date(year, month, 0).getDate();
             
             let html = `
-                <div class="max-w-7xl mx-auto w-full bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm p-4">
-                    <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 mb-3 pb-2 border-b border-slate-100">
+                <div class="w-full bg-white border-0 overflow-hidden">
+                    <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 bg-slate-50 py-3 border-b border-slate-200">
                         <div class="text-rose-500">일요일</div><div>월요일</div><div>화요일</div><div>수요일</div><div>목요일</div><div>금요일</div><div class="text-blue-500">토요일</div>
                     </div>
-                    <div class="grid grid-cols-7 gap-2">
+                    <div class="grid grid-cols-7 gap-[1px] bg-slate-200">
             `;
 
             for (let i = firstDayIndex - 1; i >= 0; i--) {
-                html += `<div class="bg-slate-50/50 min-h-[180px] p-2.5 rounded-xl opacity-30"><div class="text-xs font-semibold text-slate-400">${prevTotalDays - i}</div></div>`;
+                html += `<div class="bg-white/50 min-h-[180px] p-2.5 opacity-30"><div class="text-xs font-semibold text-slate-400">${prevTotalDays - i}</div></div>`;
             }
 
             for (let day = 1; day <= totalDays; day++) {
@@ -221,7 +221,7 @@
             const totalCells = firstDayIndex + totalDays;
             const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
             for (let day = 1; day <= remaining; day++) {
-                html += `<div class="bg-slate-50/50 min-h-[180px] p-2.5 rounded-xl opacity-30"><div class="text-xs font-semibold text-slate-400">${day}</div></div>`;
+                html += `<div class="bg-white/50 min-h-[180px] p-2.5 opacity-30"><div class="text-xs font-semibold text-slate-400">${day}</div></div>`;
             }
 
             html += `</div></div>`;
@@ -233,33 +233,36 @@
             switchView('daily');
         }
 
-        // --- 주간 뷰 (위아래 4개씩 빈틈없이 꽉 채우고 마지막은 빈 칸) ---
+        // --- 주간 뷰 (사각 박스, 회의록 연동 포함) ---
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
-                <div class="p-5 flex flex-col justify-between clean-notebook min-h-[440px] rounded-2xl border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all bg-white">
+                <div class="p-5 flex flex-col justify-between clean-notebook min-h-[440px] border-r border-b border-slate-200 bg-white">
                     <div>
-                        <div class="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-100">
+                        <div class="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-200">
                             <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold text-slate-900 cursor-pointer hover:text-indigo-600">${dayTitle}</span>
-                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
+                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-3" id="tags-box-${dateKey}"></div>
                     </div>
                     
                     <div class="flex-1 space-y-3 overflow-y-auto my-1">
                         <div>
-                            <div class="space-y-1.5 mb-3 max-h-[140px] overflow-y-auto" id="todo-box-${dateKey}"></div>
-                            <div class="flex gap-1.5">
-                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/80 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
+                            <div class="space-y-1.5 mb-3 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="flex gap-1">
+                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2.5 rounded-none text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
                             </div>
                         </div>
 
-                        <div class="pt-2">
-                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-32 text-xs p-3.5 bg-slate-50/80 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
+                        <div class="pt-1">
+                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-24 text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none"></textarea>
                         </div>
+
+                        <!-- 회의록 연동 영역 -->
+                        <div id="meeting-box-${dateKey}" class="pt-2 border-t border-dashed border-slate-200 hidden"></div>
                     </div>
 
-                    <div class="text-right pt-2.5 border-t border-slate-100">
+                    <div class="text-right pt-2.5 border-t border-slate-200">
                         <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs text-indigo-600 font-semibold hover:underline">상세 기록 →</button>
                     </div>
                 </div>
@@ -293,17 +296,16 @@
                 else bottomRowHTML += cellHTML;
             }
 
-            // 아래 마지막 8번째 빈 칸은 글자 없이 깔끔하게 비움
             let emptyCardHTML = `
-                <div class="p-5 flex flex-col justify-center items-center clean-notebook min-h-[440px] rounded-2xl border border-dashed border-slate-200 opacity-30 bg-slate-50/20"></div>
+                <div class="clean-notebook min-h-[440px] border-r border-b border-slate-200 bg-white/50"></div>
             `;
 
             let html = `
-                <div class="max-w-7xl mx-auto w-full space-y-2">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                <div class="w-full bg-white border-t border-l border-slate-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                         ${topRowHTML}
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                         ${bottomRowHTML}
                         ${emptyCardHTML}
                     </div>
@@ -328,26 +330,36 @@
             if(currentDate.getDay() === 6) titleColorClass = "text-blue-500";
 
             let html = `
-                <div class="max-w-4xl mx-auto w-full p-8 space-y-6 clean-notebook rounded-2xl bg-white border border-slate-200 shadow-sm min-h-[600px]">
-                    <div class="border-b border-slate-100 pb-4 flex justify-between items-center">
+                <div class="w-full p-8 space-y-6 clean-notebook bg-white min-h-[600px]">
+                    <div class="border-b border-slate-200 pb-4 flex justify-between items-center">
                         <h2 class="text-xl font-bold ${titleColorClass}">${month}월 ${day}일 ${dayName}요일 나의 일정 · 메모</h2>
-                        <button onclick="openTagModal('${dateKey}')" class="px-3 py-1.5 rounded-xl bg-slate-50 text-indigo-600 font-bold text-xs border border-slate-200 hover:bg-indigo-50">+ 근무 태그 추가</button>
+                        <button onclick="openTagModal('${dateKey}')" class="px-3 py-1.5 rounded bg-slate-100 text-indigo-700 font-bold text-xs border border-slate-200 hover:bg-indigo-50">+ 근무 태그 추가</button>
                     </div>
                     
                     <div class="flex flex-wrap gap-1.5 pb-2" id="tags-box-${dateKey}"></div>
 
+                    <!-- 메모 작성란 -->
                     <div class="space-y-2">
-                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-56 text-sm p-4 bg-slate-50/50 border-0 rounded-2xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
+                        <div class="text-xs font-bold text-slate-500">일일 메모</div>
+                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="" class="w-full h-36 text-sm p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none"></textarea>
                     </div>
 
-                    <div class="space-y-2 pt-4">
-                        <div class="text-xs font-bold text-slate-600 mb-2">할 일 체크리스트</div>
-                        <div class="space-y-2 mb-4 max-h-[220px] overflow-y-auto" id="todo-box-${dateKey}"></div>
-                        <div class="flex gap-2">
-                            <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-3 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-3 rounded-xl text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
+                    <!-- 할 일 체크리스트 영역 -->
+                    <div class="space-y-3 pt-4 border-t border-slate-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">할 일 체크리스트</span>
+                        </div>
+                        <div class="bg-slate-50/70 border border-slate-200 p-4 rounded-xl space-y-2">
+                            <div class="space-y-2 mb-3 max-h-[200px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="flex gap-2">
+                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- 해당 날짜 회의록 연동 영역 -->
+                    <div id="meeting-box-${dateKey}" class="pt-4 border-t border-slate-200 hidden"></div>
                 </div>
             `;
             document.getElementById('view-container').innerHTML = html;
@@ -359,17 +371,17 @@
             if (minutes.length > 0 && !activeMinuteId) activeMinuteId = minutes[0].id;
 
             let html = `
-                <div class="max-w-7xl mx-auto w-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12 min-h-[600px] z-30 relative">
-                    <div class="md:col-span-4 border-r border-slate-100 p-5 bg-slate-50/50 flex flex-col justify-between">
+                <div class="w-full bg-white grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
+                    <div class="md:col-span-4 border-r border-slate-200 p-5 bg-slate-50/50 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">회의록 목록</h3>
-                                <button onclick="createMinute()" class="bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-indigo-700">+ 회의 기록</button>
+                                <button onclick="createMinute()" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-indigo-700">+ 회의 기록</button>
                             </div>
                             <div class="space-y-2 overflow-y-auto max-h-[500px]" id="minutes-list-box">
                                 ${minutes.length === 0 ? '<p class="text-xs text-slate-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
                                 ${minutes.map(m => `
-                                    <div onclick="selectMinute(${m.id})" class="p-3.5 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-indigo-50/60 border-indigo-200 shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50'}">
+                                    <div onclick="selectMinute(${m.id})" class="p-3.5 rounded-lg border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-indigo-50 border-indigo-200 shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50'}">
                                         <div class="text-xs font-bold text-slate-800 truncate">${m.title || '제목 없음'}</div>
                                         <div class="text-[10px] text-slate-400 mt-1">${m.date || ''} · 참석자: ${m.attendees || '미지정'}</div>
                                     </div>
@@ -393,35 +405,35 @@
             if (!minute) return `<div class="flex flex-col items-center justify-center h-full text-slate-400 py-20 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
             return `
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
                         <h3 class="font-bold text-slate-800 text-sm">회의록 상세 작성</h3>
-                        <button onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2.5 py-1 rounded-lg font-semibold">삭제</button>
+                        <button onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2.5 py-1 rounded font-semibold">삭제</button>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-1">회의 제목</label>
-                            <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목을 입력하세요" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목을 입력하세요" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-1">회의 일시</label>
-                            <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">참석자</label>
-                        <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름을 입력하세요 (예: 김철수, 이영희)" class="w-full text-xs px-3.5 py-2.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름을 입력하세요 (예: 김철수, 이영희)" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">회의 안건 / 주요 내용</label>
-                        <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의에서 논의된 주요 안건과 내용을 기록하세요..." class="w-full h-32 text-xs p-3.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.content || ''}</textarea>
+                        <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의에서 논의된 주요 안건과 내용을 기록하세요..." class="w-full h-32 text-xs p-3.5 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.content || ''}</textarea>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">실행 과제 및 결정 사항 (Action Items)</label>
-                        <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="결정된 사항과 향후 실행할 과제를 적어주세요..." class="w-full h-24 text-xs p-3.5 bg-slate-50/50 border-0 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.actions || ''}</textarea>
+                        <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="결정된 사항과 향후 실행할 과제를 적어주세요..." class="w-full h-24 text-xs p-3.5 bg-white border border-slate-200 rounded-none focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${minute.actions || ''}</textarea>
                     </div>
                 </div>
             `;
@@ -447,6 +459,7 @@
             target.content = document.getElementById('m-content').value;
             target.actions = document.getElementById('m-actions').value;
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            renderView();
         }
         function deleteMinute(id) {
             if(!confirm('이 회의록을 삭제하시겠습니까?')) return;
@@ -517,6 +530,7 @@
 
         function loadTodos() {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             
             for (const dateKey in data) {
                 const box = document.getElementById(`todo-box-${dateKey}`);
@@ -526,7 +540,7 @@
 
                     todos.forEach(item => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = "flex items-center justify-between text-[11px] bg-white/80 px-2 py-1 rounded-lg group";
+                        itemDiv.className = "flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded group border border-slate-100";
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="클릭하여 완료/미완">☐ ${item.text}</span>
                             <div class="flex items-center gap-1">
@@ -549,12 +563,37 @@
                     const tags = data[dateKey].tags || [];
                     tags.forEach((tag, idx) => {
                         const tagSpan = document.createElement('span');
-                        tagSpan.className = "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 mr-1 mb-1";
+                        tagSpan.className = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 mr-1 mb-1";
                         tagSpan.innerHTML = `${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 text-indigo-400 hover:text-rose-500">×</button>`;
                         tagsBox.appendChild(tagSpan);
                     });
                 }
             }
+
+            const allDateKeys = new Set([...Object.keys(data), ...minutes.map(m => m.date)]);
+            allDateKeys.forEach(dateKey => {
+                const meetingBox = document.getElementById(`meeting-box-${dateKey}`);
+                if (meetingBox) {
+                    const matchedMinutes = minutes.filter(m => m.date === dateKey);
+                    if (matchedMinutes.length > 0) {
+                        meetingBox.classList.remove('hidden');
+                        meetingBox.innerHTML = `
+                            <div class="text-[11px] font-bold text-indigo-600 mb-1">📋 연동된 회의록 (${matchedMinutes.length}건)</div>
+                            ${matchedMinutes.map(m => `
+                                <div class="bg-indigo-50/50 border border-indigo-100 p-2.5 rounded-lg text-xs space-y-1 mb-1.5">
+                                    <div class="font-bold text-slate-800">${m.title || '제목 없음'}</div>
+                                    <div class="text-[10px] text-slate-500">참석자: ${m.attendees || '미지정'}</div>
+                                    ${m.content ? `<div class="text-slate-600 truncate">내용: ${m.content}</div>` : ''}
+                                    ${m.actions ? `<div class="text-indigo-700 font-medium truncate">실행과제: ${m.actions}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        `;
+                    } else {
+                        meetingBox.classList.add('hidden');
+                        meetingBox.innerHTML = '';
+                    }
+                }
+            });
         }
 
         function toggleTodo(dateKey, id) {
