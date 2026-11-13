@@ -152,7 +152,7 @@
                 <div class="bg-white min-h-[160px] p-2 flex flex-col justify-between relative hover:bg-slate-50/50">
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
-                            <span onclick="goToDaily(${year}, ${month},${day})" class="text-xs font-bold text-slate-700 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${day}</span>
+                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-700 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${day}</span>
                             <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 font-semibold">+ 근무</button>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-2" id="tags-box-${dateKey}"></div>
@@ -183,7 +183,11 @@
             `;
 
             for (let i = firstDayIndex - 1; i >= 0; i--) {
-                html += `<div class="bg-white min-h-[160px] p-2 opacity-30"><div class="text-xs font-semibold text-slate-400">${prevTotalDays - i}</div></div>`; }  for (let day = 1; day <= totalDays; day++) { const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                html += `<div class="bg-white min-h-[160px] p-2 opacity-30"><div class="text-xs font-semibold text-slate-400">${prevTotalDays - i}</div></div>`;
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 html += createMonthlyCellHTML(year, month, day, dateKey);
             }
 
@@ -208,7 +212,7 @@
                 <div class="bg-white min-h-[440px] p-3 flex flex-col justify-between relative hover:bg-slate-50/50">
                     <div>
                         <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-100">
-                            <span onclick="goToDaily(${year}, ${month},${day})" class="text-xs font-bold text-slate-900 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${dayTitle}</span>
+                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-900 cursor-pointer hover:text-indigo-600 hover:underline" title="클릭시 일간 다이어리로 이동">${dayTitle}</span>
                             <div class="flex flex-wrap gap-0.5 justify-end" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
@@ -219,4 +223,449 @@
                             <div class="space-y-1 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-1 z-20">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
-                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white
+                                <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded-md text-[11px] font-bold shrink-0">+</button>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-2">
+                            <div class="text-[10px] font-bold text-slate-500 mb-1">오늘의 메모 · 업무 내용</div>
+                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="업무 내용을 입력하세요..." class="w-full h-28 text-[11px] p-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="text-right pt-2 border-t border-slate-100">
+                        <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-[11px] text-indigo-600 font-semibold hover:underline">상세 기록 →</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderWeekly() {
+            const curr = new Date(currentDate);
+            const firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
+            const lastday = new Date(curr.setDate(curr.getDate() - curr.getDay() + 6));
+            
+            document.getElementById('current-date-title').innerText = `${firstday.getMonth()+1}월 ${firstday.getDate()}일 ~ ${lastday.getMonth()+1}월 ${lastday.getDate()}일`;
+
+            let html = `<div class="grid grid-cols-1 md:grid-cols-7 bg-slate-200 gap-[1px]">`;
+            const daysName = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(firstday);
+                d.setDate(firstday.getDate() + i);
+                const year = d.getFullYear();
+                const month = d.getMonth();
+                const day = d.getDate();
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const titleStr = `${daysName[i]} ${day}`;
+                
+                html += createWeeklyCellHTML(titleStr, dateKey, year, month, day);
+            }
+            html += `</div>`;
+            document.getElementById('view-container').innerHTML = html;
+        }
+
+        // --- 일간 뷰 ---
+        function renderDaily() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const day = currentDate.getDate();
+            const daysName = ['일', '월', '화', '수', '목', '금', '토'];
+            const dayName = daysName[currentDate.getDay()];
+
+            document.getElementById('current-date-title').innerText = `${year}년 ${month}월 ${day}일 (${dayName})`;
+            const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            let html = `
+                <div class="p-6 max-w-4xl mx-auto bg-white space-y-6">
+                    <div class="border-b border-slate-100 pb-4 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">${month}월 ${day}일 ${dayName}요일</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">나의 일정 · 업무 · 기록을 한곳에서</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-1.5 pb-2 border-b border-slate-50" id="tags-box-${dateKey}"></div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold text-slate-600">나의 일정 · 메모</h3>
+                        <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" placeholder="오늘의 계획과 메모를 작성하세요..." class="w-full h-32 text-sm p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold text-slate-600">할 일 체크리스트</h3>
+                        <div class="space-y-2 mb-4 max-h-[220px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                        <div class="flex gap-2 z-20">
+                            <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">추가</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('view-container').innerHTML = html;
+        }
+
+        // --- 회의록 뷰 ---
+        function renderMinutes() {
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            if (minutes.length > 0 && !activeMinuteId) {
+                activeMinuteId = minutes[0].id;
+            }
+
+            let html = `
+                <div class="grid grid-cols-1 md:grid-cols-12 min-h-[550px]">
+                    <div class="md:col-span-4 border-r border-slate-200 p-4 bg-slate-50/50 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">회의록 목록</h3>
+                                <button onclick="createMinute()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700">+ 회의 기록</button>
+                            </div>
+                            <div class="space-y-1.5 overflow-y-auto max-h-[440px]" id="minutes-list-box">
+                                ${minutes.length === 0 ? '<p class="text-xs text-slate-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
+                                ${minutes.map(m => `
+                                    <div onclick="selectMinute(${m.id})" class="p-3 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-white border-slate-200 hover:bg-slate-50'}">
+                                        <div class="text-xs font-bold text-slate-800 truncate">${m.title || '제목 없음'}</div>
+                                        <div class="text-[10px] text-slate-400 mt-0.5">${m.date || ''} · 참석자: ${m.attendees || '미지정'}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-slate-400 text-center pt-3 border-t border-slate-200">
+                            기기에 안전하게 저장됨 · 업무포털 미연결
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-8 p-6 bg-white flex flex-col justify-between" id="minute-editor-box">
+                        ${renderMinuteEditor(minutes.find(m => m.id === activeMinuteId))}
+                    </div>
+                </div>
+            `;
+            document.getElementById('view-container').innerHTML = html;
+        }
+
+        function renderMinuteEditor(minute) {
+            if (!minute) {
+                return `<div class="flex flex-col items-center justify-center h-full text-slate-400 py-20 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
+            }
+            return `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm">회의록 상세 작성</h3>
+                        <button onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2 py-1 rounded font-semibold">삭제</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">회의 제목</label>
+                            <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목을 입력하세요" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">회의 일시</label>
+                            <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">참석자</label>
+                        <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름을 입력하세요 (예: 김철수, 이영희)" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">회의 안건 / 주요 내용</label>
+                        <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의에서 논의된 주요 안건과 내용을 기록하세요..." class="w-full h-32 text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none">${minute.content || ''}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">실행 과제 및 결정 사항 (Action Items)</label>
+                        <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="결정된 사항과 향후 실행할 과제를 적어주세요..." class="w-full h-24 text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none">${minute.actions || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createMinute() {
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            const newM = {
+                id: Date.now(),
+                title: '새로운 회의록',
+                date: new Date().toISOString().split('T')[0],
+                attendees: '',
+                content: '',
+                actions: ''
+            };
+            minutes.unshift(newM);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            activeMinuteId = newM.id;
+            renderMinutes();
+        }
+
+        function selectMinute(id) {
+            activeMinuteId = id;
+            renderMinutes();
+        }
+
+        function updateMinute(id) {
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            const target = minutes.find(m => m.id === id);
+            if (!target) return;
+
+            target.title = document.getElementById('m-title').value;
+            target.date = document.getElementById('m-date').value;
+            target.attendees = document.getElementById('m-attendees').value;
+            target.content = document.getElementById('m-content').value;
+            target.actions = document.getElementById('m-actions').value;
+
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+        }
+
+        function deleteMinute(id) {
+            if(!confirm('이 회의록을 삭제하시겠습니까?')) return;
+            let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            minutes = minutes.filter(m => m.id !== id);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
+            renderMinutes();
+        }
+
+        // 공통 조작 함수
+        function changeDate(dir) {
+            if (currentView === 'monthly') {
+                currentDate.setMonth(currentDate.getMonth() + dir);
+            } else if (currentView === 'weekly') {
+                currentDate.setDate(currentDate.getDate() + (dir * 7));
+            } else {
+                currentDate.setDate(currentDate.getDate() + dir);
+            }
+            renderView();
+        }
+
+        function goToToday() {
+            currentDate = new Date();
+            renderView();
+        }
+
+        function handleEnter(e, dateKey) {
+            if (e.key === 'Enter') {
+                addTodoItem(dateKey);
+            }
+        }
+
+        function openTagModal(dateKey) {
+            activeDateKey = dateKey;
+            document.getElementById('tag-modal').classList.remove('hidden');
+        }
+
+        function closeTagModal() {
+            document.getElementById('tag-modal').classList.add('hidden');
+            activeDateKey = null;
+        }
+
+        function selectTag(tagName) {
+            if (!activeDateKey) return;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
+            if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
+            
+            data[activeDateKey].tags.push(tagName);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            closeTagModal();
+            loadTodos();
+        }
+
+        function removeTag(dateKey, index) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].tags) {
+                data[dateKey].tags.splice(index, 1);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
+        }
+
+        function addTodoItem(dateKey) {
+            const inputField = document.getElementById(`input-${dateKey}`);
+            if (!inputField) return;
+            const text = inputField.value.trim();
+            if(!text) return;
+
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
+            if(!data[dateKey].todos) data[dateKey].todos = [];
+
+            data[dateKey].todos.push({ id: Date.now(), text, done: false });
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            inputField.value = '';
+            loadTodos();
+        }
+
+        function saveMemo(dateKey) {
+            const memoField = document.getElementById(`memo-${dateKey}`);
+            if (!memoField) return;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
+            data[dateKey].memo = memoField.value;
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+        }
+
+        function loadTodos() {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            
+            for (const dateKey in data) {
+                const box = document.getElementById(`todo-box-${dateKey}`);
+                if (box) {
+                    box.innerHTML = '';
+                    const todos = data[dateKey].todos || [];
+                    todos.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = "flex items-center justify-between text-[11px] bg-slate-50 px-2 py-1 rounded border border-slate-100 group";
+                        itemDiv.innerHTML = `
+                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})" ondblclick="editTodoItem('${dateKey}', ${item.id})" title="더블클릭하여 수정">${item.text}</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="editTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-indigo-600 text-[10px] font-bold">수정</button>
+                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">×</button>
+                            </div>
+                        `;
+                        box.appendChild(itemDiv);
+                    });
+                }
+
+                const memoField = document.getElementById(`memo-${dateKey}`);
+                if (memoField && document.activeElement !== memoField) {
+                    memoField.value = data[dateKey].memo || '';
+                }
+
+                const tagsBox = document.getElementById(`tags-box-${dateKey}`);
+                if (tagsBox) {
+                    tagsBox.innerHTML = '';
+                    const tags = data[dateKey].tags || [];
+                    tags.forEach((tag, idx) => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 mr-1 mb-1";
+                        tagSpan.innerHTML = `${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 text-indigo-400 hover:text-rose-500">×</button>`;
+                        tagsBox.appendChild(tagSpan);
+                    });
+                }
+            }
+        }
+
+        function toggleTodo(dateKey, id) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
+        }
+
+        function editTodoItem(dateKey, id) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].todos) {
+                const target = data[dateKey].todos.find(i => i.id === id);
+                if(!target) return;
+                const newText = prompt("할 일 수정:", target.text);
+                if(newText !== null && newText.trim() !== "") {
+                    target.text = newText.trim();
+                    localStorage.setItem('sdm_data', JSON.stringify(data));
+                    loadTodos();
+                }
+            }
+        }
+
+        function deleteTodoItem(dateKey, id) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if(data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.filter(i => i.id !== id);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                loadTodos();
+            }
+        }
+
+        function setMode(mode) {
+            const penTools = document.getElementById('pen-tools');
+            const btnKeyboard = document.getElementById('btn-keyboard');
+            const btnPenMode = document.getElementById('btn-pen-mode');
+
+            if (mode === 'keyboard') {
+                canvas.classList.remove('pen-active');
+                penTools.classList.add('hidden');
+                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium shadow-sm";
+                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+            } else {
+                canvas.classList.add('pen-active');
+                penTools.classList.remove('hidden');
+                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium shadow-sm";
+                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium";
+            }
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            ['pen', 'highlighter', 'eraser'].forEach(t => {
+                const btn = document.getElementById(`btn-${t}`);
+                if(t === tool) {
+                    btn.className = "px-2.5 py-1 rounded bg-indigo-600 text-white text-[11px]";
+                } else {
+                    btn.className = "px-2.5 py-1 rounded bg-white border text-slate-600 text-[11px]";
+                }
+            });
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseleave', stopDraw);
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0]); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+        canvas.addEventListener('touchend', stopDraw);
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            if (!canvas.classList.contains('pen-active')) return;
+            isDrawing = true;
+            ctx.beginPath();
+            const pos = getPos(e);
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing || !canvas.classList.contains('pen-active')) return;
+            const pos = getPos(e);
+            ctx.lineWidth = document.getElementById('pen-size').value;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'eraser') {
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.globalCompositeOperation = 'destination-out';
+            } else if (currentTool === 'highlighter') {
+                ctx.strokeStyle = document.getElementById('pen-color').value;
+                ctx.globalAlpha = 0.3;
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = Number(ctx.lineWidth) * 3;
+            } else {
+                ctx.strokeStyle = document.getElementById('pen-color').value;
+                ctx.globalAlpha = 1.0;
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        function clearCanvas() {
+            if(confirm('필기 내용을 모두 지우시겠습니까?')) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+    </script>
+</body>
+</html>
