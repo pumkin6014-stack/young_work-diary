@@ -15,7 +15,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // 파이어베이스 설정 및 초기화 (작가님 API Key 적용 완료)
         const firebaseConfig = {
             apiKey: "AIzaSyAZriTNXekmMNKrnNQnnuVW2SfUEmA8-_4",
             authDomain: "work-diary-8e37b.firebaseapp.com",
@@ -31,7 +30,6 @@
         const db = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        // 로그인 상태 감지 및 실시간 동기화
         auth.onAuthStateChanged((user) => {
             const loginBtn = document.getElementById('login-btn');
             if (user) {
@@ -42,7 +40,6 @@
             }
         });
 
-        // 🔑 구글 로그인 / 로그아웃 핸들러
         function handleGoogleLogin() {
             const user = auth.currentUser;
             if (user) {
@@ -60,7 +57,6 @@
             }
         }
 
-        // 클라우드 데이터 동기화
         function saveDataToStorage() {
             const sdmData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             const sdmMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
@@ -104,8 +100,8 @@
             padding-bottom: 0px !important;
             background-image: none !important;
         }
-        #drawing-canvas { pointer-events: none; }
-        #drawing-canvas.pen-active { pointer-events: auto; }
+        #drawing-canvas { pointer-events: none; z-index: 10; }
+        #drawing-canvas.pen-active { pointer-events: auto; z-index: 40; }
         .todo-item { cursor: grab; }
         .todo-item:active { cursor: grabbing; }
         .todo-item.dragging { opacity: 0.4; }
@@ -115,7 +111,7 @@
 
     <div class="flex-1 flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
         <!-- 좌측 사이드 네비게이션 바 -->
-        <aside class="w-16 sm:w-20 bg-slate-900 text-white flex flex-col items-center py-5 justify-between shrink-0 select-none">
+        <aside class="w-16 sm:w-20 bg-slate-900 text-white flex flex-col items-center py-5 justify-between shrink-0 select-none z-50">
             <div class="flex flex-col items-center space-y-6">
                 <div class="text-[10px] font-black tracking-widest text-slate-400 opacity-0">SDM</div>
                 <div class="space-y-3 w-full px-2">
@@ -143,8 +139,8 @@
         </aside>
 
         <!-- 우측 메인 작업 영역 -->
-        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/40">
-            <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0">
+        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/40 relative">
+            <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0 z-50">
                 <div class="flex items-center gap-3">
                     <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
                     <div class="relative">
@@ -154,7 +150,6 @@
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <!-- 구글 로그인 버튼 -->
                     <button id="login-btn" onclick="handleGoogleLogin()" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-100 shadow-2xs">구글 로그인</button>
 
                     <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
@@ -170,7 +165,7 @@
             </header>
 
             <!-- 펜 및 툴바 영역 -->
-            <div class="bg-white border-b border-slate-100 px-6 py-2 flex flex-wrap items-center gap-3 text-xs shrink-0">
+            <div class="bg-white border-b border-slate-100 px-6 py-2 flex flex-wrap items-center gap-3 text-xs shrink-0 z-50">
                 <div class="flex items-center gap-1.5">
                     <button onclick="setMode('keyboard')" id="btn-keyboard" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow-2xs">접기 -</button>
                     <button onclick="setMode('pen')" id="btn-pen-mode" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium hover:bg-slate-200">선택 펜</button>
@@ -188,7 +183,7 @@
             </div>
 
             <div class="flex-1 overflow-y-auto relative p-0" id="view-container"></div>
-            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none"></canvas>
+            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
         </div>
     </div>
 
@@ -655,7 +650,7 @@
             if (!data[targetDateKey]) data[targetDateKey] = { todos: [], tags: [], memo: '' };
             if (!data[targetDateKey].todos) data[targetDateKey].todos = [];
             data[targetDateKey].todos.push(moved);
-            localStorage.setItem('sdM_data', JSON.stringify(data));
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             saveDataToStorage();
             loadTodos();
         }
@@ -665,6 +660,7 @@
             activeDateMenuKey = dateKey;
             const m = document.getElementById('date-context-menu');
             m.style.top = `${e.clientY}px`; m.style.left = `${e.clientX}px`;
+            m.classList.add('hidden'); // 방어코드
             m.classList.remove('hidden');
         }
 
@@ -687,19 +683,64 @@
 
         function setMode(mode) {
             const penTools = document.getElementById('pen-tools');
+            const btnKeyboard = document.getElementById('btn-keyboard');
+            const btnPenMode = document.getElementById('btn-pen-mode');
+
             if (mode === 'keyboard') {
                 canvas.classList.remove('pen-active');
                 penTools.classList.add('hidden');
+                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow-2xs";
+                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium hover:bg-slate-200";
             } else {
                 canvas.classList.add('pen-active');
                 penTools.classList.remove('hidden');
+                btnPenMode.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow-2xs";
+                btnKeyboard.className = "px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium hover:bg-slate-200";
             }
         }
+
         function setTool(t) { currentTool = t; }
-        canvas.addEventListener('pointerdown', (e) => { if (e.pointerType === 'pen' && canvas.classList.contains('pen-active')) { isDrawing = true; ctx.beginPath(); const r = canvas.getBoundingClientRect(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top); } });
-        canvas.addEventListener('pointermove', (e) => { if (!isDrawing || e.pointerType !== 'pen') return; const r = canvas.getBoundingClientRect(); ctx.lineTo(e.clientX - r.left, e.clientY - r.top); ctx.stroke(); });
+
+        canvas.addEventListener('pointerdown', (e) => { 
+            if (!canvas.classList.contains('pen-active')) return;
+            isDrawing = true; 
+            ctx.beginPath(); 
+            const r = canvas.getBoundingClientRect(); 
+            ctx.moveTo(e.clientX - r.left, e.clientY - r.top); 
+        });
+
+        canvas.addEventListener('pointermove', (e) => { 
+            if (!isDrawing || !canvas.classList.contains('pen-active')) return; 
+            const r = canvas.getBoundingClientRect(); 
+            ctx.lineWidth = document.getElementById('pen-size').value;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+            } else if (currentTool === 'highlighter') {
+                ctx.strokeStyle = document.getElementById('pen-color').value;
+                ctx.globalAlpha = 0.3;
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = Number(ctx.lineWidth) * 3;
+            } else {
+                ctx.strokeStyle = document.getElementById('pen-color').value;
+                ctx.globalAlpha = 1.0;
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            ctx.lineTo(e.clientX - r.left, e.clientY - r.top); 
+            ctx.stroke(); 
+        });
+
         canvas.addEventListener('pointerup', () => { isDrawing = false; ctx.closePath(); });
-        function clearCanvas() { if(confirm('필기를 모두 지울까요?')) ctx.clearRect(0, 0, canvas.width, canvas.height); }
+        canvas.addEventListener('pointerleave', () => { isDrawing = false; ctx.closePath(); });
+
+        function clearCanvas() { 
+            if(confirm('필기를 모두 지울까요?')) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            }
+        }
     </script>
 </body>
 </html>
