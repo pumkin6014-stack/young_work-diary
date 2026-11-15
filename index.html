@@ -15,7 +15,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // 파이어베이스 설정 및 초기화 (작가님 API Key 적용 완료)
         const firebaseConfig = {
             apiKey: "AIzaSyAZriTNXekmMNKrnNQnnuVW2SfUEmA8-_4",
             authDomain: "work-diary-8e37b.firebaseapp.com",
@@ -31,7 +30,6 @@
         const db = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        // 로그인 상태 감지 및 실시간 동기화
         auth.onAuthStateChanged((user) => {
             const loginBtn = document.getElementById('login-btn');
             if (user) {
@@ -42,7 +40,6 @@
             }
         });
 
-        // 🔑 구글 로그인 / 로그아웃 핸들러
         function handleGoogleLogin() {
             const user = auth.currentUser;
             if (user) {
@@ -60,7 +57,6 @@
             }
         }
 
-        // 클라우드 데이터 동기화
         function saveDataToStorage() {
             const sdmData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             const sdmMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
@@ -104,8 +100,6 @@
             padding-bottom: 0px !important;
             background-image: none !important;
         }
-        #drawing-canvas { pointer-events: none; }
-        #drawing-canvas.pen-active { pointer-events: auto; }
         .todo-item { cursor: grab; }
         .todo-item:active { cursor: grabbing; }
         .todo-item.dragging { opacity: 0.4; }
@@ -143,7 +137,7 @@
         </aside>
 
         <!-- 우측 메인 작업 영역 -->
-        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/40">
+        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/40 relative">
             <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0">
                 <div class="flex items-center gap-3">
                     <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
@@ -154,7 +148,6 @@
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <!-- 구글 로그인 버튼 -->
                     <button id="login-btn" onclick="handleGoogleLogin()" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-100 shadow-2xs">구글 로그인</button>
 
                     <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
@@ -169,26 +162,7 @@
                 </div>
             </header>
 
-            <!-- 펜 및 툴바 영역 -->
-            <div class="bg-white border-b border-slate-100 px-6 py-2 flex flex-wrap items-center gap-3 text-xs shrink-0">
-                <div class="flex items-center gap-1.5">
-                    <button onclick="setMode('keyboard')" id="btn-keyboard" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow-2xs">접기 -</button>
-                    <button onclick="setMode('pen')" id="btn-pen-mode" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium hover:bg-slate-200">선택 펜</button>
-                </div>
-                <div id="pen-tools" class="hidden flex items-center gap-2 border-l pl-3 border-slate-200">
-                    <div class="flex items-center gap-1">
-                        <button onclick="setTool('pen')" id="btn-pen" class="px-2 py-0.5 rounded bg-indigo-600 text-white text-[11px]">볼펜</button>
-                        <button onclick="setTool('highlighter')" id="btn-highlighter" class="px-2 py-0.5 rounded bg-white border text-slate-600 text-[11px]">형광펜</button>
-                        <button onclick="setTool('eraser')" id="btn-eraser" class="px-2 py-0.5 rounded bg-white border text-slate-600 text-[11px]">지우개</button>
-                    </div>
-                    <input type="color" id="pen-color" value="#4f46e5" class="w-6 h-6 rounded border cursor-pointer">
-                    <input type="range" id="pen-size" min="1" max="20" value="3" class="w-16">
-                </div>
-                <button onclick="clearCanvas()" class="ml-auto text-rose-500 hover:text-rose-700 font-medium">필기 삭제</button>
-            </div>
-
             <div class="flex-1 overflow-y-auto relative p-0" id="view-container"></div>
-            <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none"></canvas>
         </div>
     </div>
 
@@ -235,25 +209,14 @@
     <script>
         let currentView = 'monthly';
         let currentDate = new Date();
-        let currentTool = 'pen';
-        let isDrawing = false;
         let activeDateKey = null;
         let activeMinuteId = null;
         let searchQuery = '';
         
-        let contextTarget = null;
+        let activeDateMenuKey = null;
         let copiedDateData = null;
         
-        const canvas = document.getElementById('drawing-canvas');
-        const ctx = canvas.getContext('2d');
-
-        function resizeCanvas() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
         window.onload = () => {
-            resizeCanvas();
             renderView();
             window.addEventListener('click', () => {
                 document.getElementById('date-context-menu').classList.add('hidden');
@@ -304,6 +267,12 @@
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
                             <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <select id="type-${dateKey}" class="text-[10px] bg-slate-50 border border-slate-200 rounded px-1 py-1 focus:outline-none">
+                                <option value="default">기본</option>
+                                <option value="meeting">회의&교육</option>
+                                <option value="share">업무공유</option>
+                                <option value="notice">공지</option>
+                            </select>
                             <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
                         </div>
                         <div class="flex items-center justify-between gap-1 pt-0.5">
@@ -375,6 +344,12 @@
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
                                     <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    <select id="type-${dateKey}" class="text-[10px] bg-white border border-slate-200 rounded px-1 py-1 focus:outline-none">
+                                        <option value="default">기본</option>
+                                        <option value="meeting">회의&교육</option>
+                                        <option value="share">업무공유</option>
+                                        <option value="notice">공지</option>
+                                    </select>
                                     <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2 rounded text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
@@ -448,6 +423,12 @@
                             <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                <select id="type-${dateKey}" class="text-xs bg-white border border-slate-200 rounded px-2 py-2 focus:outline-none">
+                                    <option value="default">기본</option>
+                                    <option value="meeting">회의&교육</option>
+                                    <option value="share">업무공유</option>
+                                    <option value="notice">공지</option>
+                                </select>
                                 <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
                             </div>
                         </div>
@@ -584,11 +565,16 @@
 
         function addTodoItem(dateKey) {
             const inputField = document.getElementById(`input-${dateKey}`);
+            const typeField = document.getElementById(`type-${dateKey}`);
             if (!inputField || !inputField.value.trim()) return;
+            
+            const text = inputField.value.trim();
+            const type = typeField ? typeField.value : 'default';
+
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             if(!data[dateKey].todos) data[dateKey].todos = [];
-            data[dateKey].todos.push({ id: Date.now(), text: inputField.value.trim(), done: false });
+            data[dateKey].todos.push({ id: Date.now(), text, type, done: false });
             localStorage.setItem('sdm_data', JSON.stringify(data));
             saveDataToStorage();
             inputField.value = '';
@@ -612,11 +598,23 @@
                 if (box) {
                     box.innerHTML = '';
                     (data[dateKey].todos || []).forEach((item, index) => {
+                        let bgClass = 'bg-white text-slate-700 border-slate-100';
+                        if (item.type === 'meeting') bgClass = 'bg-rose-100 text-rose-900 border-rose-200 font-semibold';
+                        else if (item.type === 'share') bgClass = 'bg-amber-100 text-amber-900 border-amber-200 font-semibold';
+                        else if (item.type === 'notice') bgClass = 'bg-emerald-100 text-emerald-900 border-emerald-200 font-semibold';
+
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border bg-white text-slate-700 border-slate-100 todo-item`;
+                        itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border ${bgClass} todo-item`;
                         itemDiv.draggable = true;
                         itemDiv.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id })));
-                        itemDiv.innerHTML = `<span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : 'font-medium'}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span><span class="text-[9px] opacity-40 ml-1">⠿</span>`;
+                        
+                        itemDiv.innerHTML = `
+                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
+                            <div class="flex items-center gap-1 ml-1">
+                                <button onclick="copySingleTodo('${item.text}')" class="text-[10px] opacity-60 hover:opacity-100" title="이 내용만 복사">📋</button>
+                                <span class="text-[9px] opacity-40">⠿</span>
+                            </div>
+                        `;
                         box.appendChild(itemDiv);
                     });
                 }
@@ -655,9 +653,18 @@
             if (!data[targetDateKey]) data[targetDateKey] = { todos: [], tags: [], memo: '' };
             if (!data[targetDateKey].todos) data[targetDateKey].todos = [];
             data[targetDateKey].todos.push(moved);
-            localStorage.setItem('sdM_data', JSON.stringify(data));
+            localStorage.setItem('sdm_data', JSON.stringify(data));
             saveDataToStorage();
             loadTodos();
+        }
+
+        // 💡 특정 할 일 항목만 복사하는 기능
+        function copySingleTodo(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`"${text}" 내용이 클립보드에 복사되었습니다!`);
+            }).catch(err => {
+                console.error('복사 실패:', err);
+            });
         }
 
         function openDateContextMenu(e, dateKey) {
@@ -671,7 +678,7 @@
         function copyDateContent() {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             copiedDateData = data[activeDateMenuKey] ? JSON.parse(JSON.stringify(data[activeDateMenuKey])) : null;
-            alert('날짜 내용 복사 완료!');
+            alert('날짜 전체 내용 복사 완료!');
             document.getElementById('date-context-menu').classList.add('hidden');
         }
 
@@ -684,22 +691,6 @@
             renderView();
             document.getElementById('date-context-menu').classList.add('hidden');
         }
-
-        function setMode(mode) {
-            const penTools = document.getElementById('pen-tools');
-            if (mode === 'keyboard') {
-                canvas.classList.remove('pen-active');
-                penTools.classList.add('hidden');
-            } else {
-                canvas.classList.add('pen-active');
-                penTools.classList.remove('hidden');
-            }
-        }
-        function setTool(t) { currentTool = t; }
-        canvas.addEventListener('pointerdown', (e) => { if (e.pointerType === 'pen' && canvas.classList.contains('pen-active')) { isDrawing = true; ctx.beginPath(); const r = canvas.getBoundingClientRect(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top); } });
-        canvas.addEventListener('pointermove', (e) => { if (!isDrawing || e.pointerType !== 'pen') return; const r = canvas.getBoundingClientRect(); ctx.lineTo(e.clientX - r.left, e.clientY - r.top); ctx.stroke(); });
-        canvas.addEventListener('pointerup', () => { isDrawing = false; ctx.closePath(); });
-        function clearCanvas() { if(confirm('필기를 모두 지울까요?')) ctx.clearRect(0, 0, canvas.width, canvas.height); }
     </script>
 </body>
 </html>
