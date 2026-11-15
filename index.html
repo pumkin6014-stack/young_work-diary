@@ -280,7 +280,7 @@
                     <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px] todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
-                            <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
                             <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-1 rounded text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
                         </div>
                         <div class="flex items-center justify-between gap-1 pt-0.5">
@@ -351,7 +351,7 @@
                             <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
-                                    <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                     <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2 rounded text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
@@ -424,7 +424,7 @@
                         <div class="bg-slate-50/70 border border-slate-200 p-4 rounded-xl space-y-2">
                             <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
-                                <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                 <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
                             </div>
                         </div>
@@ -528,7 +528,14 @@
             renderView();
         }
         function goToToday() { currentDate = new Date(); renderView(); }
-        function handleEnter(e, dateKey) { if (e.key === 'Enter') addTodoItem(dateKey); }
+        
+        function handleKeyDown(e, dateKey) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTodoItem(dateKey);
+            }
+        }
+        
         function handleSearch(q) { searchQuery = q.trim().toLowerCase(); loadTodos(); }
         
         function openTagModal(dateKey) { activeDateKey = dateKey; document.getElementById('tag-modal').classList.remove('hidden'); }
@@ -571,12 +578,54 @@
             data[dateKey].todos.push({ id: Date.now(), text, type: 'default', done: false });
             localStorage.setItem('sdm_data', JSON.stringify(data));
             saveDataToStorage();
-            inputField.value = '';
-            loadTodos();
             
-            // 입력 직후 해당 날짜의 입력창에 다시 포커스 유지
-            const nextInput = document.getElementById(`input-${dateKey}`);
-            if (nextInput) nextInput.focus();
+            inputField.value = '';
+            
+            // 전체 뷰를 통째로 다시 그리지 않고 해당 날짜의 목록만 업데이트한 뒤 커서 유지
+            updateTodoBoxOnly(dateKey);
+            inputField.focus();
+        }
+
+        // 전체 화면 리렌더링 없이 할 일 목록과 입력창 포커스만 유지하는 함수
+        function updateTodoBoxOnly(dateKey) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            const box = document.getElementById(`todo-box-${dateKey}`);
+            if (box && data[dateKey]) {
+                box.innerHTML = '';
+                (data[dateKey].todos || []).forEach((item) => {
+                    let bgClass = 'bg-white text-slate-700 border-slate-100';
+                    if (item.type === 'meeting') bgClass = 'bg-rose-100 text-rose-900 border-rose-200 font-semibold';
+                    else if (item.type === 'share') bgClass = 'bg-amber-100 text-amber-900 border-amber-200 font-semibold';
+                    else if (item.type === 'notice') bgClass = 'bg-emerald-100 text-emerald-900 border-emerald-200 font-semibold';
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border ${bgClass} todo-item`;
+                    itemDiv.draggable = true;
+                    itemDiv.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id })));
+                    
+                    itemDiv.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        document.getElementById('date-context-menu').classList.add('hidden');
+                        
+                        activeTodoTarget = { dateKey, id: item.id };
+                        activeTodoTextForCopy = item.text;
+                        
+                        const menu = document.getElementById('todo-context-menu');
+                        menu.style.top = `${e.clientY}px`;
+                        menu.style.left = `${e.clientX}px`;
+                        menu.classList.remove('hidden');
+                    });
+
+                    itemDiv.innerHTML = `
+                        <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
+                        <div class="flex items-center gap-1 ml-1">
+                            <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold" title="삭제">×</button>
+                        </div>
+                    `;
+                    box.appendChild(itemDiv);
+                });
+            }
         }
 
         function saveMemo(dateKey) {
@@ -592,43 +641,8 @@
         function loadTodos() {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             for (const dateKey in data) {
-                const box = document.getElementById(`todo-box-${dateKey}`);
-                if (box) {
-                    box.innerHTML = '';
-                    (data[dateKey].todos || []).forEach((item, index) => {
-                        let bgClass = 'bg-white text-slate-700 border-slate-100';
-                        if (item.type === 'meeting') bgClass = 'bg-rose-100 text-rose-900 border-rose-200 font-semibold';
-                        else if (item.type === 'share') bgClass = 'bg-amber-100 text-amber-900 border-amber-200 font-semibold';
-                        else if (item.type === 'notice') bgClass = 'bg-emerald-100 text-emerald-900 border-emerald-200 font-semibold';
-
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border ${bgClass} todo-item`;
-                        itemDiv.draggable = true;
-                        itemDiv.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id })));
-                        
-                        itemDiv.addEventListener('contextmenu', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            document.getElementById('date-context-menu').classList.add('hidden');
-                            
-                            activeTodoTarget = { dateKey, id: item.id };
-                            activeTodoTextForCopy = item.text;
-                            
-                            const menu = document.getElementById('todo-context-menu');
-                            menu.style.top = `${e.clientY}px`;
-                            menu.style.left = `${e.clientX}px`;
-                            menu.classList.remove('hidden');
-                        });
-
-                        itemDiv.innerHTML = `
-                            <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
-                            <div class="flex items-center gap-1 ml-1">
-                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold" title="삭제">×</button>
-                            </div>
-                        `;
-                        box.appendChild(itemDiv);
-                    });
-                }
+                updateTodoBoxOnly(dateKey);
+                
                 const memoField = document.getElementById(`memo-${dateKey}`);
                 if (memoField && document.activeElement !== memoField) memoField.value = data[dateKey].memo || '';
                 
@@ -655,7 +669,7 @@
                 data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
                 saveDataToStorage();
-                loadTodos();
+                updateTodoBoxOnly(dateKey);
             }
         }
 
@@ -673,7 +687,7 @@
             data[targetDateKey].todos.push(moved);
             localStorage.setItem('sdm_data', JSON.stringify(data));
             saveDataToStorage();
-            loadTodos();
+            renderView();
         }
 
         function deleteTodoItem(dateKey, id) {
@@ -682,7 +696,7 @@
                 data[dateKey].todos = data[dateKey].todos.filter(i => i.id !== id);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
                 saveDataToStorage();
-                loadTodos();
+                updateTodoBoxOnly(dateKey);
             }
         }
 
@@ -694,7 +708,7 @@
                 data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, type: type} : i);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
                 saveDataToStorage();
-                loadTodos();
+                updateTodoBoxOnly(dateKey);
             }
             document.getElementById('todo-context-menu').classList.add('hidden');
         }
