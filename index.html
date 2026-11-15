@@ -166,7 +166,7 @@
         </div>
     </div>
 
-    <!-- 근무 태그 선택 모달팝업 (전부 빨간색) -->
+    <!-- 근무 태그 선택 모달팝업 (지정 색상 반영) -->
     <div id="tag-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -174,17 +174,17 @@
                 <button onclick="closeTagModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="selectTag('FD')" class="p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">FD</button>
-                <button onclick="selectTag('시간외1')" class="p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">시간외1</button>
-                <button onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">시간외1.5</button>
-                <button onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">시간외2</button>
-                <button onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">교육</button>
+                <button onclick="selectTag('FD')" class="p-2.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs hover:bg-amber-100">FD</button>
+                <button onclick="selectTag('시간외1')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1</button>
+                <button onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1.5</button>
+                <button onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외2</button>
+                <button onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 font-bold text-xs hover:bg-blue-100">교육</button>
                 <button onclick="selectTag('휴가')" class="col-span-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
             </div>
         </div>
     </div>
 
-    <!-- 휴가자 선택 모달팝업 (전부 회색) -->
+    <!-- 휴가자 선택 모달팝업 (회색) -->
     <div id="chef-vacation-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -632,7 +632,15 @@
                 if (tagsBox) {
                     tagsBox.innerHTML = '';
                     (data[dateKey].tags || []).forEach((tag, idx) => {
-                        tagsBox.innerHTML += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 mr-1 mb-0.5">${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 opacity-60">×</button></span>`;
+                        // 태그 종류에 따른 색상 동적 지정 (FD: 노란색, 시간외: 주황색, 교육: 파란색, 휴가: 빨간색, 직원 휴가: 회색)
+                        let tagStyle = 'bg-indigo-50 text-indigo-700';
+                        if (tag === 'FD') tagStyle = 'bg-amber-100 text-amber-800';
+                        else if (tag.startsWith('시간외')) tagStyle = 'bg-orange-100 text-orange-800';
+                        else if (tag === '교육') tagStyle = 'bg-blue-100 text-blue-800';
+                        else if (tag === '휴가') tagStyle = 'bg-rose-100 text-rose-800';
+                        else if (tag.startsWith('휴가:')) tagStyle = 'bg-slate-100 text-slate-700';
+
+                        tagsBox.innerHTML += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${tagStyle} mr-1 mb-0.5">${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 opacity-60">×</button></span>`;
                     });
                 }
             }
