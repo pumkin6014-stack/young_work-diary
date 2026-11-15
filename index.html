@@ -15,9 +15,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // 파이어베이스 설정 및 초기화
+        // 파이어베이스 설정 및 초기화 (작가님 API Key 적용 완료)
         const firebaseConfig = {
-            apiKey: "AIzaSyAzritNXEkmMNKrnNQNnuVW2SfUEmAB-_4",
+            apiKey: "AIzaSyAZriTNXekmMNKrnNQnnuVW2SfUEmA8-_4",
             authDomain: "work-diary-8e37b.firebaseapp.com",
             projectId: "work-diary-8e37b",
             storageBucket: "work-diary-8e37b.appspot.com",
@@ -655,7 +655,7 @@
             if (!data[targetDateKey]) data[targetDateKey] = { todos: [], tags: [], memo: '' };
             if (!data[targetDateKey].todos) data[targetDateKey].todos = [];
             data[targetDateKey].todos.push(moved);
-            localStorage.setItem('sdm_data', JSON.stringify(data));
+            localStorage.setItem('sdM_data', JSON.stringify(data));
             saveDataToStorage();
             loadTodos();
         }
