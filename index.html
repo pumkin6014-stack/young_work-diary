@@ -8,6 +8,60 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK 로드 및 개인 키 연동 완료 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzritNXEkmMNKrnNQNnuVW2SfUEmAB-_4",
+            authDomain: "work-diary-8e37b.firebaseapp.com",
+            projectId: "work-diary-8e37b",
+            storageBucket: "work-diary-8e37b.appspot.com",
+            messagingSenderId: "678422675784",
+            appId: "1:678422675784:web:3cdca5bbe4a57bccb2f37d",
+            measurementId: "G-SK1J7DBPHY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        window.db = db;
+        window.auth = auth;
+        window.provider = provider;
+
+        // 로그인 상태 감지 및 실시간 동기화
+        onAuthStateChanged(auth, (user) => {
+            const loginBtn = document.getElementById('login-btn');
+            if (user) {
+                if(loginBtn) loginBtn.innerText = `${user.displayName.split(' ')[0]} (로그아웃)`;
+                loadUserDataFromCloud(user.uid);
+            } else {
+                if(loginBtn) loginBtn.innerText = '구글 로그인';
+            }
+        });
+
+        function loadUserDataFromCloud(uid) {
+            const docRef = doc(db, "users", uid);
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.sdm_data) localStorage.setItem('sdm_data', JSON.stringify(data.sdm_data));
+                    if (data.sdm_minutes) localStorage.setItem('sdm_minutes', JSON.stringify(data.sdm_minutes));
+                } else {
+                    const initialData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+                    const initialMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+                    setDoc(docRef, { sdm_data: initialData, sdm_minutes: initialMinutes }, { merge: true });
+                }
+                if (typeof renderView === 'function') renderView();
+            });
+        }
+    </script>
+
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         
@@ -81,6 +135,9 @@
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <!-- 🔑 구글 로그인 버튼 추가됨 -->
+                    <button id="login-btn" onclick="handleGoogleLogin()" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-100 shadow-2xs">구글 로그인</button>
+
                     <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
                         <span id="current-date-title" class="text-sm font-bold text-slate-700">2026년 11월</span>
                         <div class="flex gap-1">
@@ -215,6 +272,41 @@
             });
         };
 
+        // ☁️ 데이터 자동 저장 및 클라우드(파이어베이스) 동기화 함수
+        function saveDataToStorage() {
+            const sdmData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            const sdmMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+
+            const user = window.auth.currentUser;
+            if (user) {
+                window.setDoc(window.doc(window.db, "users", user.uid), {
+                    sdm_data: sdmData,
+                    sdm_minutes: sdmMinutes,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).catch(err => console.error("동기화 실패:", err));
+            }
+        }
+
+        // 🔑 구글 로그인 / 로그아웃 핸들러
+        function handleGoogleLogin() {
+            const user = window.auth.currentUser;
+            if (user) {
+                window.signOut(window.auth).then(() => {
+                    alert('로그아웃 되었습니다.');
+                    location.reload();
+                });
+            } else {
+                window.signInWithPopup(window.auth, window.provider)
+                    .then((result) => {
+                        alert(`${result.user.displayName.split(' ')[0]}님 환영합니다!`);
+                    })
+                    .catch((error) => {
+                        console.error('로그인 실패:', error);
+                        alert('로그인에 실패했습니다.');
+                    });
+            }
+        }
+
         // --- 백업(내보내기) 및 복원(가져오기) 함수 ---
         function exportData() {
             const backupData = {
@@ -238,12 +330,9 @@
             reader.onload = function(e) {
                 try {
                     const backupData = JSON.parse(e.target.result);
-                    if (backupData.sdm_data) {
-                        localStorage.setItem('sdm_data', JSON.stringify(backupData.sdm_data));
-                    }
-                    if (backupData.sdm_minutes) {
-                        localStorage.setItem('sdm_minutes', JSON.stringify(backupData.sdm_minutes));
-                    }
+                    if (backupData.sdm_data) localStorage.setItem('sdm_data', JSON.stringify(backupData.sdm_data));
+                    if (backupData.sdm_minutes) localStorage.setItem('sdm_minutes', JSON.stringify(backupData.sdm_minutes));
+                    saveDataToStorage();
                     alert('데이터를 성공적으로 불러왔습니다!');
                     renderView();
                 } catch (err) {
@@ -599,6 +688,7 @@
             minutes.unshift(newM);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = newM.id;
+            saveDataToStorage();
             renderMinutes();
         }
 
@@ -613,6 +703,7 @@
             target.content = document.getElementById('m-content').value;
             target.actions = document.getElementById('m-actions').value;
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            saveDataToStorage();
             renderView();
         }
         function deleteMinute(id) {
@@ -621,6 +712,7 @@
             minutes = minutes.filter(m => m.id !== id);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
+            saveDataToStorage();
             renderMinutes();
         }
 
@@ -650,6 +742,7 @@
             if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
             data[activeDateKey].tags.push(tagName);
             localStorage.setItem('sdm_data', JSON.stringify(data));
+            saveDataToStorage();
             closeTagModal();
             loadTodos();
         }
@@ -658,14 +751,8 @@
         function closeChefModal() { document.getElementById('chef-vacation-modal').classList.add('hidden'); activeDateKey = null; }
 
         function selectChefTag(name) {
-            if (!activeDateKey) return;
-            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if(!data[activeDateKey]) data[activeDateKey] = { todos: [], tags: [], memo: '' };
-            if(!data[activeDateKey].tags) data[activeDateKey].tags = [];
-            data[activeDateKey].tags.push(`휴가: ${name}`);
-            localStorage.setItem('sdm_data', JSON.stringify(data));
+            selectTag(`휴가: ${name}`);
             closeChefModal();
-            loadTodos();
         }
 
         function removeTag(dateKey, index) {
@@ -673,6 +760,7 @@
             if(data[dateKey] && data[dateKey].tags) {
                 data[dateKey].tags.splice(index, 1);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
                 loadTodos();
             }
         }
@@ -689,6 +777,7 @@
 
             data[dateKey].todos.push({ id: Date.now(), text, done: false, style: 'bg-white text-slate-700 border-slate-100' });
             localStorage.setItem('sdm_data', JSON.stringify(data));
+            saveDataToStorage();
             inputField.value = '';
             loadTodos();
         }
@@ -700,6 +789,7 @@
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             data[dateKey].memo = memoField.value;
             localStorage.setItem('sdm_data', JSON.stringify(data));
+            saveDataToStorage();
         }
 
         function loadTodos() {
@@ -839,6 +929,7 @@
             const newTodo = { ...copiedTodoItem, id: Date.now() + Math.random() };
             data[activeDateMenuKey].todos.push(newTodo);
             localStorage.setItem('sdm_data', JSON.stringify(data));
+            saveDataToStorage();
             renderView();
             document.getElementById('date-context-menu').classList.add('hidden');
             document.getElementById('todo-context-menu').classList.add('hidden');
@@ -868,6 +959,7 @@
                 data[activeDateMenuKey].todos = data[activeDateMenuKey].todos.map(t => ({...t, id: Date.now() + Math.random()}));
             }
             localStorage.setItem('sdm_data', JSON.stringify(data));
+            saveDataToStorage();
             renderView();
             document.getElementById('date-context-menu').classList.add('hidden');
             document.getElementById('todo-context-menu').classList.add('hidden');
@@ -894,6 +986,7 @@
             data[targetDateKey].todos.push(movedItem);
 
             localStorage.setItem('sdm_data', JSON.stringify(data));
+            saveDataToStorage();
             loadTodos();
         }
 
@@ -906,6 +999,7 @@
                 if (target) {
                     target.style = styleClass;
                     localStorage.setItem('sdm_data', JSON.stringify(data));
+                    saveDataToStorage();
                     loadTodos();
                 }
             }
@@ -924,6 +1018,7 @@
                     if (newText !== null && newText.trim() !== "") {
                         target.text = newText.trim();
                         localStorage.setItem('sdm_data', JSON.stringify(data));
+                        saveDataToStorage();
                         loadTodos();
                     }
                 }
@@ -939,6 +1034,7 @@
             if (data[dateKey] && data[dateKey].todos) {
                 data[dateKey].todos = data[dateKey].todos.filter(i => i.id !== id);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
                 loadTodos();
             }
             document.getElementById('todo-context-menu').classList.add('hidden');
@@ -950,6 +1046,7 @@
             if(data[dateKey] && data[dateKey].todos) {
                 data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
                 loadTodos();
             }
         }
