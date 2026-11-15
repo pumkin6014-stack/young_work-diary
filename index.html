@@ -100,8 +100,9 @@
             padding-bottom: 0px !important;
             background-image: none !important;
         }
-        #drawing-canvas { pointer-events: none; z-index: 10; }
-        #drawing-canvas.pen-active { pointer-events: auto; z-index: 40; }
+        /* 💡 펜 모드일 때 캔버스는 터치를 받되, 툴바와 버튼 영역은 항상 터치가 우선되도록 설정 */
+        #drawing-canvas { pointer-events: none; z-index: 10; touch-action: none; }
+        #drawing-canvas.pen-active { pointer-events: auto; z-index: 30; touch-action: none; }
         .todo-item { cursor: grab; }
         .todo-item:active { cursor: grabbing; }
         .todo-item.dragging { opacity: 0.4; }
@@ -164,7 +165,7 @@
                 </div>
             </header>
 
-            <!-- 펜 및 툴바 영역 -->
+            <!-- 펜 및 툴바 영역 (z-50을 주어 펜 모드에서도 펜으로 툴바 터치 가능) -->
             <div class="bg-white border-b border-slate-100 px-6 py-2 flex flex-wrap items-center gap-3 text-xs shrink-0 z-50">
                 <div class="flex items-center gap-1.5">
                     <button onclick="setMode('keyboard')" id="btn-keyboard" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow-2xs">접기 -</button>
@@ -183,6 +184,7 @@
             </div>
 
             <div class="flex-1 overflow-y-auto relative p-0" id="view-container"></div>
+            <!-- 💡 오직 S펜(스타일러스 펜)으로만 선이 그려지는 캔버스 레이어 -->
             <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
         </div>
     </div>
@@ -660,7 +662,6 @@
             activeDateMenuKey = dateKey;
             const m = document.getElementById('date-context-menu');
             m.style.top = `${e.clientY}px`; m.style.left = `${e.clientX}px`;
-            m.classList.add('hidden'); // 방어코드
             m.classList.remove('hidden');
         }
 
@@ -701,8 +702,10 @@
 
         function setTool(t) { currentTool = t; }
 
+        // 💡 펜(스타일러스)으로만 그려지도록 엄격하게 필터링하는 포인터 이벤트
         canvas.addEventListener('pointerdown', (e) => { 
             if (!canvas.classList.contains('pen-active')) return;
+            if (e.pointerType !== 'pen') return; // 손가락 터치는 무시하고 버튼 클릭/스크롤 허용!
             isDrawing = true; 
             ctx.beginPath(); 
             const r = canvas.getBoundingClientRect(); 
@@ -711,6 +714,7 @@
 
         canvas.addEventListener('pointermove', (e) => { 
             if (!isDrawing || !canvas.classList.contains('pen-active')) return; 
+            if (e.pointerType !== 'pen') return;
             const r = canvas.getBoundingClientRect(); 
             ctx.lineWidth = document.getElementById('pen-size').value;
             ctx.lineCap = 'round';
@@ -733,8 +737,8 @@
             ctx.stroke(); 
         });
 
-        canvas.addEventListener('pointerup', () => { isDrawing = false; ctx.closePath(); });
-        canvas.addEventListener('pointerleave', () => { isDrawing = false; ctx.closePath(); });
+        canvas.addEventListener('pointerup', (e) => { if (e.pointerType === 'pen') { isDrawing = false; ctx.closePath(); } });
+        canvas.addEventListener('pointerleave', (e) => { if (e.pointerType === 'pen') { isDrawing = false; ctx.closePath(); } });
 
         function clearCanvas() { 
             if(confirm('필기를 모두 지울까요?')) {
