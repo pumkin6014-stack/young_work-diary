@@ -166,7 +166,7 @@
         </div>
     </div>
 
-    <!-- 근무 태그 선택 모달팝업 (지정 색상 반영) -->
+    <!-- 근무 태그 선택 모달팝업 -->
     <div id="tag-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -184,7 +184,7 @@
         </div>
     </div>
 
-    <!-- 휴가자 선택 모달팝업 (회색) -->
+    <!-- 휴가자 선택 모달팝업 -->
     <div id="chef-vacation-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -573,6 +573,10 @@
             saveDataToStorage();
             inputField.value = '';
             loadTodos();
+            
+            // 입력 직후 해당 날짜의 입력창에 다시 포커스 유지
+            const nextInput = document.getElementById(`input-${dateKey}`);
+            if (nextInput) nextInput.focus();
         }
 
         function saveMemo(dateKey) {
@@ -632,7 +636,6 @@
                 if (tagsBox) {
                     tagsBox.innerHTML = '';
                     (data[dateKey].tags || []).forEach((tag, idx) => {
-                        // 태그 종류에 따른 색상 동적 지정 (FD: 노란색, 시간외: 주황색, 교육: 파란색, 휴가: 빨간색, 직원 휴가: 회색)
                         let tagStyle = 'bg-indigo-50 text-indigo-700';
                         if (tag === 'FD') tagStyle = 'bg-amber-100 text-amber-800';
                         else if (tag.startsWith('시간외')) tagStyle = 'bg-orange-100 text-orange-800';
