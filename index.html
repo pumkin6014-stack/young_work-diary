@@ -9,12 +9,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK 로드 및 연동 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- 파이어베이스 안정적인 CDN 라이브러리 로드 -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
+    <script>
+        // 파이어베이스 설정 및 초기화
         const firebaseConfig = {
             apiKey: "AIzaSyAzritNXEkmMNKrnNQNnuVW2SfUEmAB-_4",
             authDomain: "work-diary-8e37b.firebaseapp.com",
@@ -25,21 +26,13 @@
             measurementId: "G-SK1J7DBPHY"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const provider = new firebase.auth.GoogleAuthProvider();
 
-        window.db = db;
-        window.auth = auth;
-        window.provider = provider;
-        window.signInWithRedirect = signInWithRedirect;
-
-        getRedirectResult(auth).catch((error) => {
-            console.error("로그인 에러:", error);
-        });
-
-        onAuthStateChanged(auth, (user) => {
+        // 로그인 상태 감지 및 실시간 동기화
+        auth.onAuthStateChanged((user) => {
             const loginBtn = document.getElementById('login-btn');
             if (user) {
                 if(loginBtn) loginBtn.innerText = `${user.displayName.split(' ')[0]} (로그아웃)`;
@@ -49,17 +42,48 @@
             }
         });
 
+        // 🔑 구글 로그인 / 로그아웃 핸들러
+        function handleGoogleLogin() {
+            const user = auth.currentUser;
+            if (user) {
+                auth.signOut().then(() => {
+                    alert('로그아웃 되었습니다.');
+                    location.reload();
+                });
+            } else {
+                auth.signInWithPopup(provider).then((result) => {
+                    alert(`${result.user.displayName.split(' ')[0]}님 환영합니다!`);
+                }).catch((error) => {
+                    console.error("로그인 실패:", error);
+                    alert("로그인에 실패했습니다: " + error.message);
+                });
+            }
+        }
+
+        // 클라우드 데이터 동기화
+        function saveDataToStorage() {
+            const sdmData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            const sdmMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            const user = auth.currentUser;
+            if (user) {
+                db.collection("users").doc(user.uid).set({
+                    sdm_data: sdmData,
+                    sdm_minutes: sdmMinutes,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).catch(err => console.error("동기화 실패:", err));
+            }
+        }
+
         function loadUserDataFromCloud(uid) {
-            const docRef = doc(db, "users", uid);
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
+            db.collection("users").doc(uid).onSnapshot((docSnap) => {
+                if (docSnap.exists) {
                     const data = docSnap.data();
                     if (data.sdm_data) localStorage.setItem('sdm_data', JSON.stringify(data.sdm_data));
                     if (data.sdm_minutes) localStorage.setItem('sdm_minutes', JSON.stringify(data.sdm_minutes));
                 } else {
                     const initialData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
                     const initialMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-                    setDoc(docRef, { sdm_data: initialData, sdm_minutes: initialMinutes }, { merge: true });
+                    db.collection("users").doc(uid).set({ sdm_data: initialData, sdm_minutes: initialMinutes }, { merge: true });
                 }
                 if (typeof renderView === 'function') renderView();
             });
@@ -89,9 +113,7 @@
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col p-2 sm:p-4">
 
-    <!-- 전체 화면 꽉 채우는 레이아웃 컨테이너 -->
     <div class="flex-1 flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-        
         <!-- 좌측 사이드 네비게이션 바 -->
         <aside class="w-16 sm:w-20 bg-slate-900 text-white flex flex-col items-center py-5 justify-between shrink-0 select-none">
             <div class="flex flex-col items-center space-y-6">
@@ -122,8 +144,6 @@
 
         <!-- 우측 메인 작업 영역 -->
         <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/40">
-            
-            <!-- 상단 헤더 영역 -->
             <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0">
                 <div class="flex items-center gap-3">
                     <h1 id="view-title" class="text-lg font-bold text-slate-900 tracking-tight">월간 다이어리</h1>
@@ -167,7 +187,6 @@
                 <button onclick="clearCanvas()" class="ml-auto text-rose-500 hover:text-rose-700 font-medium">필기 삭제</button>
             </div>
 
-            <!-- 스크롤 가능한 본문 영역 -->
             <div class="flex-1 overflow-y-auto relative p-0" id="view-container"></div>
             <canvas id="drawing-canvas" class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none"></canvas>
         </div>
@@ -240,34 +259,6 @@
                 document.getElementById('date-context-menu').classList.add('hidden');
             });
         };
-
-        // ☁️ 데이터 자동 저장 및 클라우드 동기화
-        function saveDataToStorage() {
-            const sdmData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            const sdmMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-
-            const user = window.auth.currentUser;
-            if (user) {
-                window.setDoc(window.doc(window.db, "users", user.uid), {
-                    sdm_data: sdmData,
-                    sdm_minutes: sdmMinutes,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true }).catch(err => console.error("동기화 실패:", err));
-            }
-        }
-
-        // 🔑 리디렉션 방식 로그인 핸들러
-        function handleGoogleLogin() {
-            const user = window.auth.currentUser;
-            if (user) {
-                window.signOut(window.auth).then(() => {
-                    alert('로그아웃 되었습니다.');
-                    location.reload();
-                });
-            } else {
-                window.signInWithRedirect(window.auth, window.provider);
-            }
-        }
 
         function switchView(view) {
             currentView = view;
@@ -546,7 +537,7 @@
         function deleteMinute(id) {
             if(!confirm('삭제하시겠습니까?')) return;
             let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-            minutes = minutes.exit ? minutes.filter(m => m.id !== id) : minutes.filter(m => m.id !== id);
+            minutes = minutes.filter(m => m.id !== id);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
             saveDataToStorage();
@@ -642,7 +633,6 @@
             }
         }
 
-        // ✅ 에러가 수정된 깔끔한 toggleTodo 함수
         function toggleTodo(dateKey, id) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].todos) {
