@@ -206,8 +206,14 @@
         <button onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-indigo-600 font-medium flex items-center gap-2"><span>📌</span> 날짜 전체 붙여넣기</button>
     </div>
 
-    <!-- 개별 할 일 우클릭 컨텍스트 메뉴 (복사 기능) -->
-    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-36 text-xs">
+    <!-- 개별 할 일 우클릭 컨텍스트 메뉴 (복사 및 하이라이트 색상 변경) -->
+    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-44 text-xs">
+        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">하이라이트 색상</div>
+        <button onclick="changeTodoType('default')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block"></span> 기본 (없음)</button>
+        <button onclick="changeTodoType('meeting')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-300 inline-block"></span> 회의&교육 (빨간색)</button>
+        <button onclick="changeTodoType('share')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-300 inline-block"></span> 업무공유 (노란색)</button>
+        <button onclick="changeTodoType('notice')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-300 inline-block"></span> 공지 (초록색)</button>
+        <div class="border-t border-slate-100 my-1"></div>
         <button onclick="copySingleTodoAction()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 내용 복사</button>
     </div>
 
@@ -220,6 +226,9 @@
         
         let activeDateMenuKey = null;
         let copiedDateData = null;
+        
+        // 우클릭된 할 일 타겟 정보
+        let activeTodoTarget = null; // { dateKey, id }
         let activeTodoTextForCopy = '';
         
         window.onload = () => {
@@ -274,16 +283,10 @@
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
                             <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                            <select id="type-${dateKey}" class="text-[10px] bg-slate-50 border border-slate-200 rounded px-1 py-1 focus:outline-none">
-                                <option value="default">기본</option>
-                                <option value="meeting">회의&교육</option>
-                                <option value="share">업무공유</option>
-                                <option value="notice">공지</option>
-                            </select>
-                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
+                            <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-1 rounded text-[11px] font-bold shrink-0 hover:bg-indigo-700">+</button>
                         </div>
                         <div class="flex items-center justify-between gap-1 pt-0.5">
-                            <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold border border-sky-100">+ 휴가</button>
+                            <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold border border-indigo-100">+ 휴가</button>
                             <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold border border-indigo-100">+ 근무</button>
                         </div>
                     </div>
@@ -351,16 +354,10 @@
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
                                     <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                    <select id="type-${dateKey}" class="text-[10px] bg-white border border-slate-200 rounded px-1 py-1 focus:outline-none">
-                                        <option value="default">기본</option>
-                                        <option value="meeting">회의&교육</option>
-                                        <option value="share">업무공유</option>
-                                        <option value="notice">공지</option>
-                                    </select>
                                     <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-3 py-2 rounded text-xs font-bold shrink-0 hover:bg-indigo-700">+</button>
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
-                                    <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold border border-sky-100">+ 휴가</button>
+                                    <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold border border-indigo-100">+ 휴가</button>
                                     <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold border border-indigo-100">+ 근무</button>
                                 </div>
                             </div>
@@ -421,7 +418,7 @@
                             <div class="flex flex-wrap gap-1.5" id="tags-box-${dateKey}"></div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="openChefModal('${dateKey}')" class="px-3 py-1.5 rounded bg-sky-50 text-sky-700 font-bold text-xs border border-sky-200">+ 휴가 추가</button>
+                            <button onclick="openChefModal('${dateKey}')" class="px-3 py-1.5 rounded bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-100">+ 휴가 추가</button>
                             <button onclick="openTagModal('${dateKey}')" class="px-3 py-1.5 rounded bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-100">+ 근무 태그 추가</button>
                         </div>
                     </div>
@@ -430,12 +427,6 @@
                             <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                <select id="type-${dateKey}" class="text-xs bg-white border border-slate-200 rounded px-2 py-2 focus:outline-none">
-                                    <option value="default">기본</option>
-                                    <option value="meeting">회의&교육</option>
-                                    <option value="share">업무공유</option>
-                                    <option value="notice">공지</option>
-                                </select>
                                 <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
                             </div>
                         </div>
@@ -572,16 +563,14 @@
 
         function addTodoItem(dateKey) {
             const inputField = document.getElementById(`input-${dateKey}`);
-            const typeField = document.getElementById(`type-${dateKey}`);
             if (!inputField || !inputField.value.trim()) return;
             
             const text = inputField.value.trim();
-            const type = typeField ? typeField.value : 'default';
 
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(!data[dateKey]) data[dateKey] = { todos: [], tags: [], memo: '' };
             if(!data[dateKey].todos) data[dateKey].todos = [];
-            data[dateKey].todos.push({ id: Date.now(), text, type, done: false });
+            data[dateKey].todos.push({ id: Date.now(), text, type: 'default', done: false });
             localStorage.setItem('sdm_data', JSON.stringify(data));
             saveDataToStorage();
             inputField.value = '';
@@ -615,10 +604,15 @@
                         itemDiv.draggable = true;
                         itemDiv.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id })));
                         
-                        // 우클릭 시 개별 항목 복사 메뉴 띄우기
+                        // 할 일 항목 우클릭 이벤트 (날짜 메뉴와 겹치지 않도록 전파 차단)
                         itemDiv.addEventListener('contextmenu', (e) => {
                             e.preventDefault();
+                            e.stopPropagation();
+                            document.getElementById('date-context-menu').classList.add('hidden'); // 날짜 메뉴 숨기기
+                            
+                            activeTodoTarget = { dateKey, id: item.id };
                             activeTodoTextForCopy = item.text;
+                            
                             const menu = document.getElementById('todo-context-menu');
                             menu.style.top = `${e.clientY}px`;
                             menu.style.left = `${e.clientX}px`;
@@ -628,7 +622,7 @@
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
                             <div class="flex items-center gap-1 ml-1">
-                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1" title="삭제">🗑️</button>
+                                <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold" title="삭제">×</button>
                                 <span class="text-[9px] opacity-40">⠿</span>
                             </div>
                         `;
@@ -658,7 +652,7 @@
             }
         }
 
-        // 💡 할 일 항목 삭제 기능
+        // 💡 할 일 항목 삭제 기능 (× 아이콘)
         function deleteTodoItem(dateKey, id) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].todos) {
@@ -667,6 +661,20 @@
                 saveDataToStorage();
                 loadTodos();
             }
+        }
+
+        // 💡 우클릭 메뉴에서 하이라이트 색상 변경
+        function changeTodoType(type) {
+            if (!activeTodoTarget) return;
+            const { dateKey, id } = activeTodoTarget;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, type: type} : i);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
+                loadTodos();
+            }
+            document.getElementById('todo-context-menu').classList.add('hidden');
         }
 
         function allowDrop(e) { e.preventDefault(); }
@@ -699,6 +707,9 @@
 
         function openDateContextMenu(e, dateKey) {
             e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('todo-context-menu').classList.add('hidden'); // 할 일 메뉴 숨기기
+            
             activeDateMenuKey = dateKey;
             const m = document.getElementById('date-context-menu');
             m.style.top = `${e.clientY}px`; m.style.left = `${e.clientX}px`;
