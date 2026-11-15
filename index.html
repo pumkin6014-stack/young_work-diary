@@ -100,6 +100,9 @@
             padding-bottom: 0px !important;
             background-image: none !important;
         }
+        .todo-item { cursor: grab; }
+        .todo-item:active { cursor: grabbing; }
+        .todo-item.dragging { opacity: 0.4; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col p-2 sm:p-4">
@@ -274,7 +277,7 @@
                             <div class="flex flex-wrap gap-1 items-center justify-end overflow-hidden max-h-[45px]" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
-                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px]" id="todo-box-${dateKey}"></div>
+                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px] todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
                             <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -345,7 +348,7 @@
                     </div>
                     <div class="flex-1 flex flex-col justify-between space-y-3 my-1">
                         <div>
-                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
                                     <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -419,7 +422,7 @@
                     </div>
                     <div class="space-y-3 shrink-0">
                         <div class="bg-slate-50/70 border border-slate-200 p-4 rounded-xl space-y-2">
-                            <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                 <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
@@ -588,8 +591,7 @@
                 const box = document.getElementById(`todo-box-${dateKey}`);
                 if (box) {
                     box.innerHTML = '';
-                    const todos = data[dateKey].todos || [];
-                    todos.forEach((item, index) => {
+                    (data[dateKey].todos || []).forEach((item, index) => {
                         let bgClass = 'bg-white text-slate-700 border-slate-100';
                         if (item.type === 'meeting') bgClass = 'bg-rose-100 text-rose-900 border-rose-200 font-semibold';
                         else if (item.type === 'share') bgClass = 'bg-amber-100 text-amber-900 border-amber-200 font-semibold';
@@ -597,6 +599,8 @@
 
                         const itemDiv = document.createElement('div');
                         itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border ${bgClass} todo-item`;
+                        itemDiv.draggable = true;
+                        itemDiv.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id })));
                         
                         itemDiv.addEventListener('contextmenu', (e) => {
                             e.preventDefault();
@@ -612,20 +616,9 @@
                             menu.classList.remove('hidden');
                         });
 
-                        // 💡 위/아래 순서 변경 버튼 추가 (가독성 유지 및 터치 편리)
-                        let orderBtns = '<div class="flex items-center gap-0.5 ml-1">';
-                        if (index > 0) {
-                            orderBtns += `<button onclick="moveTodoOrder('${dateKey}', ${index}, -1)" class="text-[9px] text-slate-400 hover:text-indigo-600 px-0.5" title="위로">▲</button>`;
-                        }
-                        if (index < todos.length - 1) {
-                            orderBtns += `<button onclick="moveTodoOrder('${dateKey}', ${index}, 1)" class="text-[9px] text-slate-400 hover:text-indigo-600 px-0.5" title="아래로">▼</button>`;
-                        }
-                        orderBtns += '</div>';
-
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
                             <div class="flex items-center gap-1 ml-1">
-                                ${orderBtns}
                                 <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold" title="삭제">×</button>
                             </div>
                         `;
@@ -655,21 +648,21 @@
             }
         }
 
-        // 💡 할 일 항목 순서 위/아래 변경 함수
-        function moveTodoOrder(dateKey, index, direction) {
+        function allowDrop(e) { e.preventDefault(); }
+        function dropTodo(e, targetDateKey) {
+            e.preventDefault();
+            const { dateKey: srcDateKey, id } = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if (data[dateKey] && data[dateKey].todos) {
-                const todos = data[dateKey].todos;
-                const targetIndex = index + direction;
-                if (targetIndex >= 0 && targetIndex < todos.length) {
-                    const temp = todos[index];
-                    todos[index] = todos[targetIndex];
-                    todos[targetIndex] = temp;
-                    localStorage.setItem('sdm_data', JSON.stringify(data));
-                    saveDataToStorage();
-                    loadTodos();
-                }
-            }
+            if (!data[srcDateKey]?.todos) return;
+            const idx = data[srcDateKey].todos.findIndex(i => i.id === id);
+            if (idx === -1) return;
+            const [moved] = data[srcDateKey].todos.splice(idx, 1);
+            if (!data[targetDateKey]) data[targetDateKey] = { todos: [], tags: [], memo: '' };
+            if (!data[targetDateKey].todos) data[targetDateKey].todos = [];
+            data[targetDateKey].todos.push(moved);
+            localStorage.setItem('sdm_data', JSON.stringify(data));
+            saveDataToStorage();
+            loadTodos();
         }
 
         function deleteTodoItem(dateKey, id) {
