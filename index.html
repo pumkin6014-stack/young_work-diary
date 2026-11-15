@@ -580,13 +580,15 @@
             saveDataToStorage();
             
             inputField.value = '';
-            
-            // 전체 뷰를 통째로 다시 그리지 않고 해당 날짜의 목록만 업데이트한 뒤 커서 유지
             updateTodoBoxOnly(dateKey);
-            inputField.focus();
+            
+            // 입력창 포커스가 무조건 유지되도록 강제 설정
+            setTimeout(() => {
+                const targetInput = document.getElementById(`input-${dateKey}`);
+                if (targetInput) targetInput.focus();
+            }, 10);
         }
 
-        // 전체 화면 리렌더링 없이 할 일 목록과 입력창 포커스만 유지하는 함수
         function updateTodoBoxOnly(dateKey) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             const box = document.getElementById(`todo-box-${dateKey}`);
