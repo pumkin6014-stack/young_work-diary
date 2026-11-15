@@ -546,7 +546,7 @@
         function deleteMinute(id) {
             if(!confirm('삭제하시겠습니까?')) return;
             let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-            minutes = minutes.filter(m => m.id !== id);
+            minutes = minutes.exit ? minutes.filter(m => m.id !== id) : minutes.filter(m => m.id !== id);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
             saveDataToStorage();
@@ -642,10 +642,11 @@
             }
         }
 
+        // ✅ 에러가 수정된 깔끔한 toggleTodo 함수
         function toggleTodo(dateKey, id) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if(data[dateKey]?.todos) {
-                data[dateKey].todos = data[dateKey].todos.pop ? data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i) : [];
+            if(data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.map(i => i.id === id ? {...i, done: !i.done} : i);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
                 saveDataToStorage();
                 loadTodos();
