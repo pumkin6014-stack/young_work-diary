@@ -100,9 +100,6 @@
             padding-bottom: 0px !important;
             background-image: none !important;
         }
-        .todo-item { cursor: grab; }
-        .todo-item:active { cursor: grabbing; }
-        .todo-item.dragging { opacity: 0.4; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col p-2 sm:p-4">
@@ -206,13 +203,13 @@
         <button onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-indigo-600 font-medium flex items-center gap-2"><span>📌</span> 날짜 전체 붙여넣기</button>
     </div>
 
-    <!-- 개별 할 일 우클릭 컨텍스트 메뉴 (복사 및 하이라이트 색상 변경) -->
-    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-44 text-xs">
-        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">하이라이트 색상</div>
-        <button onclick="changeTodoType('default')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block"></span> 기본 (없음)</button>
-        <button onclick="changeTodoType('meeting')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-300 inline-block"></span> 회의&교육 (빨간색)</button>
-        <button onclick="changeTodoType('share')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-300 inline-block"></span> 업무공유 (노란색)</button>
-        <button onclick="changeTodoType('notice')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-300 inline-block"></span> 공지 (초록색)</button>
+    <!-- 개별 할 일 우클릭 컨텍스트 메뉴 -->
+    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-36 text-xs">
+        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">하이라이트</div>
+        <button onclick="changeTodoType('default')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-200 inline-block"></span> 기본</button>
+        <button onclick="changeTodoType('meeting')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span> 회의&교육</button>
+        <button onclick="changeTodoType('share')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> 업무공유</button>
+        <button onclick="changeTodoType('notice')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> 공지</button>
         <div class="border-t border-slate-100 my-1"></div>
         <button onclick="copySingleTodoAction()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 내용 복사</button>
     </div>
@@ -226,9 +223,7 @@
         
         let activeDateMenuKey = null;
         let copiedDateData = null;
-        
-        // 우클릭된 할 일 타겟 정보
-        let activeTodoTarget = null; // { dateKey, id }
+        let activeTodoTarget = null;
         let activeTodoTextForCopy = '';
         
         window.onload = () => {
@@ -279,7 +274,7 @@
                             <div class="flex flex-wrap gap-1 items-center justify-end overflow-hidden max-h-[45px]" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
-                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px] todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
+                    <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px]" id="todo-box-${dateKey}"></div>
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
                             <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -350,7 +345,7 @@
                     </div>
                     <div class="flex-1 flex flex-col justify-between space-y-3 my-1">
                         <div>
-                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto" id="todo-box-${dateKey}"></div>
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
                                     <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -424,7 +419,7 @@
                     </div>
                     <div class="space-y-3 shrink-0">
                         <div class="bg-slate-50/70 border border-slate-200 p-4 rounded-xl space-y-2">
-                            <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
                                 <input type="text" id="input-${dateKey}" onkeypress="handleEnter(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                 <button onclick="addTodoItem('${dateKey}')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shrink-0 hover:bg-indigo-700">추가</button>
@@ -593,7 +588,8 @@
                 const box = document.getElementById(`todo-box-${dateKey}`);
                 if (box) {
                     box.innerHTML = '';
-                    (data[dateKey].todos || []).forEach((item, index) => {
+                    const todos = data[dateKey].todos || [];
+                    todos.forEach((item, index) => {
                         let bgClass = 'bg-white text-slate-700 border-slate-100';
                         if (item.type === 'meeting') bgClass = 'bg-rose-100 text-rose-900 border-rose-200 font-semibold';
                         else if (item.type === 'share') bgClass = 'bg-amber-100 text-amber-900 border-amber-200 font-semibold';
@@ -601,14 +597,11 @@
 
                         const itemDiv = document.createElement('div');
                         itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border ${bgClass} todo-item`;
-                        itemDiv.draggable = true;
-                        itemDiv.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id })));
                         
-                        // 할 일 항목 우클릭 이벤트 (날짜 메뉴와 겹치지 않도록 전파 차단)
                         itemDiv.addEventListener('contextmenu', (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            document.getElementById('date-context-menu').classList.add('hidden'); // 날짜 메뉴 숨기기
+                            document.getElementById('date-context-menu').classList.add('hidden');
                             
                             activeTodoTarget = { dateKey, id: item.id };
                             activeTodoTextForCopy = item.text;
@@ -619,11 +612,21 @@
                             menu.classList.remove('hidden');
                         });
 
+                        // 💡 위/아래 순서 변경 버튼 추가 (가독성 유지 및 터치 편리)
+                        let orderBtns = '<div class="flex items-center gap-0.5 ml-1">';
+                        if (index > 0) {
+                            orderBtns += `<button onclick="moveTodoOrder('${dateKey}', ${index}, -1)" class="text-[9px] text-slate-400 hover:text-indigo-600 px-0.5" title="위로">▲</button>`;
+                        }
+                        if (index < todos.length - 1) {
+                            orderBtns += `<button onclick="moveTodoOrder('${dateKey}', ${index}, 1)" class="text-[9px] text-slate-400 hover:text-indigo-600 px-0.5" title="아래로">▼</button>`;
+                        }
+                        orderBtns += '</div>';
+
                         itemDiv.innerHTML = `
                             <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
                             <div class="flex items-center gap-1 ml-1">
+                                ${orderBtns}
                                 <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold" title="삭제">×</button>
-                                <span class="text-[9px] opacity-40">⠿</span>
                             </div>
                         `;
                         box.appendChild(itemDiv);
@@ -652,7 +655,23 @@
             }
         }
 
-        // 💡 할 일 항목 삭제 기능 (× 아이콘)
+        // 💡 할 일 항목 순서 위/아래 변경 함수
+        function moveTodoOrder(dateKey, index, direction) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                const todos = data[dateKey].todos;
+                const targetIndex = index + direction;
+                if (targetIndex >= 0 && targetIndex < todos.length) {
+                    const temp = todos[index];
+                    todos[index] = todos[targetIndex];
+                    todos[targetIndex] = temp;
+                    localStorage.setItem('sdm_data', JSON.stringify(data));
+                    saveDataToStorage();
+                    loadTodos();
+                }
+            }
+        }
+
         function deleteTodoItem(dateKey, id) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             if(data[dateKey] && data[dateKey].todos) {
@@ -663,7 +682,6 @@
             }
         }
 
-        // 💡 우클릭 메뉴에서 하이라이트 색상 변경
         function changeTodoType(type) {
             if (!activeTodoTarget) return;
             const { dateKey, id } = activeTodoTarget;
@@ -677,24 +695,6 @@
             document.getElementById('todo-context-menu').classList.add('hidden');
         }
 
-        function allowDrop(e) { e.preventDefault(); }
-        function dropTodo(e, targetDateKey) {
-            e.preventDefault();
-            const { dateKey: srcDateKey, id } = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
-            if (!data[srcDateKey]?.todos) return;
-            const idx = data[srcDateKey].todos.findIndex(i => i.id === id);
-            if (idx === -1) return;
-            const [moved] = data[srcDateKey].todos.splice(idx, 1);
-            if (!data[targetDateKey]) data[targetDateKey] = { todos: [], tags: [], memo: '' };
-            if (!data[targetDateKey].todos) data[targetDateKey].todos = [];
-            data[targetDateKey].todos.push(moved);
-            localStorage.setItem('sdm_data', JSON.stringify(data));
-            saveDataToStorage();
-            loadTodos();
-        }
-
-        // 💡 우클릭 메뉴 통한 개별 복사 액션
         function copySingleTodoAction() {
             if (!activeTodoTextForCopy) return;
             navigator.clipboard.writeText(activeTodoTextForCopy).then(() => {
@@ -708,7 +708,7 @@
         function openDateContextMenu(e, dateKey) {
             e.preventDefault();
             e.stopPropagation();
-            document.getElementById('todo-context-menu').classList.add('hidden'); // 할 일 메뉴 숨기기
+            document.getElementById('todo-context-menu').classList.add('hidden');
             
             activeDateMenuKey = dateKey;
             const m = document.getElementById('date-context-menu');
