@@ -354,7 +354,7 @@
             div.id = `summary-item-row-${monthNum}-${itemId}`;
             div.innerHTML = `
                 <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
-                <input type="text" id="summary-text-${itemId}" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="text" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
                 <button onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
             `;
             container.appendChild(div);
@@ -380,8 +380,7 @@
             let items = summaries[summaryKey];
             if (!Array.isArray(items)) items = [];
 
-            const newId = Date.now();
-            items.push({ id: newId, text: text, done: false });
+            items.push({ id: Date.now(), text: text, done: false });
             summaries[summaryKey] = items;
 
             localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
@@ -485,11 +484,10 @@
 
             let items = monthNotes[noteKey];
             if (!Array.isArray(items)) {
-                if (typeof items === 'string' && items.trim() !== '') {
-                    items = [{ id: Date.now(), text: items, done: false }];
-                } else {
-                    items = [];
-                }
+                items = [];
+            } else {
+                // 비정상적인 데이터(문자열 '0' 등) 필터링 정리
+                items = items.filter(i => i && typeof i === 'object' && i.text !== undefined);
             }
 
             container.innerHTML = '';
