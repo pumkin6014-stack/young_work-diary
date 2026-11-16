@@ -312,8 +312,10 @@
             for (let m = 1; m <= 12; m++) {
                 const summaryKey = `${year}-${String(m).padStart(2, '0')}`;
                 const textarea = document.getElementById(`summary-textarea-${m}`);
-                if (textarea && document.activeElement !== textarea) {
-                    textarea.value = summaries[summaryKey] || '';
+                if (textarea) {
+                    if (document.activeElement !== textarea) {
+                        textarea.value = summaries[summaryKey] || '';
+                    }
                 }
             }
         }
@@ -355,19 +357,33 @@
             else if (currentView === 'daily') renderDaily();
             else if (currentView === 'minutes') renderMinutes();
             loadTodos();
-            
-            if (isSummaryOpen) {
-                loadAllMonthValues();
-            }
+            loadAllMonthValues();
         }
 
         function createMonthlyCellHTML(year, month, day, dateKey, isCurrentMonth = true) {
-            const opacityClass = isCurrentMonth ? 'bg-white' : 'bg-white/60 opacity-60';
+            const today = new Date();
+            const isToday = isCurrentMonth && 
+                            year === today.getFullYear() && 
+                            month === today.getMonth() && 
+                            day === today.getDate();
+
+            // 오늘 날짜인 경우 강조 테두리와 배경 스타일 적용
+            let cellStyle = isCurrentMonth ? 'bg-white' : 'bg-white/60 opacity-60';
+            let borderStyle = 'border border-stone-200';
+            
+            if (isToday) {
+                cellStyle = 'bg-stone-50/90 shadow-xs ring-1 ring-stone-400';
+                borderStyle = 'border-2 border-stone-500';
+            }
+
             return `
-                <div class="${opacityClass} min-h-[180px] p-2.5 flex flex-col justify-between relative border border-stone-200" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
+                <div class="${cellStyle} min-h-[180px] p-2.5 flex flex-col justify-between relative ${borderStyle}" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
                     <div>
                         <div class="flex items-center justify-between mb-1">
-                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-stone-700 cursor-pointer hover:text-stone-900 shrink-0">${day}</span>
+                            <div class="flex items-center gap-1.5">
+                                <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold ${isToday ? 'bg-stone-700 text-white px-1.5 py-0.5 rounded-md shadow-2xs' : 'text-stone-700 hover:text-stone-900'} cursor-pointer shrink-0">${day}</span>
+                                ${isToday ? '<span class="text-[9px] font-extrabold px-1.5 py-0.2 bg-stone-200 text-stone-700 rounded tracking-wider">TODAY</span>' : ''}
+                            </div>
                             <div class="flex flex-wrap gap-1 items-center justify-end overflow-hidden max-h-[45px]" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
