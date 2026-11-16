@@ -347,7 +347,7 @@
             div.id = `summary-item-row-${monthNum}-${itemId}`;
             div.innerHTML = `
                 <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
-                <input type="text" id="summary-text-input-${monthNum}-${itemId}" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="text" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
                 <button onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
             `;
             container.appendChild(div);
@@ -463,8 +463,8 @@
             div.className = "flex items-center gap-1.5 group bg-white px-2 py-1.5 rounded-lg border border-stone-200 shadow-2xs";
             div.id = `month-note-row-${itemId}`;
             div.innerHTML = `
-                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesData()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
-                <input type="text" id="month-note-text-input-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesData()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesDataOnly()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
+                <input type="text" id="month-note-input-field-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesDataOnly()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
                 <div class="flex items-center gap-0.5 ml-1 shrink-0">
                     <div class="flex flex-col">
                         <button onclick="moveMonthNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
@@ -545,11 +545,10 @@
             monthNotes[noteKey] = items;
             localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
             saveDataToStorage();
-            
-            // 포커스 유지 처리
             loadMonthNotes();
+            
             setTimeout(() => {
-                const el = document.getElementById(`month-note-text-input-${itemId}`);
+                const el = document.getElementById(`month-note-input-field-${itemId}`);
                 if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
             }, 10);
         }
@@ -572,15 +571,16 @@
             monthNotes[noteKey] = items;
             localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
             saveDataToStorage();
-            
             loadMonthNotes();
+            
             setTimeout(() => {
-                const el = document.getElementById(`month-note-text-input-${itemId}`);
+                const el = document.getElementById(`month-note-input-field-${itemId}`);
                 if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
             }, 10);
         }
 
-        function updateMonthNotesData() {
+        // 전체 리렌더링 없이 데이터만 실시간 반영 및 저장 (커서 튕김 현상 원천 차단)
+        function updateMonthNotesDataOnly() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
             const noteKey = `${year}-${String(month).padStart(2, '0')}`;
