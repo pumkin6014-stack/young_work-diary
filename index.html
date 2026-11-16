@@ -166,7 +166,7 @@
         </div>
     </div>
 
-    <!-- 근무 태그 선택 모달팝업 -->
+    <!-- 근무 태그 선택 모달팝업 ('당직' 추가됨) -->
     <div id="tag-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -175,6 +175,7 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <button onclick="selectTag('FD')" class="p-2.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs hover:bg-amber-100">FD</button>
+                <button onclick="selectTag('당직')" class="p-2.5 rounded-xl bg-yellow-100 text-yellow-800 border border-yellow-300 font-bold text-xs hover:bg-yellow-200">당직</button>
                 <button onclick="selectTag('시간외1')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1</button>
                 <button onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1.5</button>
                 <button onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외2</button>
@@ -582,11 +583,36 @@
             inputField.value = '';
             updateTodoBoxOnly(dateKey);
             
-            // 입력창 포커스가 무조건 유지되도록 강제 설정
             setTimeout(() => {
                 const targetInput = document.getElementById(`input-${dateKey}`);
                 if (targetInput) targetInput.focus();
             }, 10);
+        }
+
+        function moveTodoUp(dateKey, index) {
+            if (index <= 0) return;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                const temp = data[dateKey].todos[index];
+                data[dateKey].todos[index] = data[dateKey].todos[index - 1];
+                data[dateKey].todos[index - 1] = temp;
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
+                updateTodoBoxOnly(dateKey);
+            }
+        }
+
+        function moveTodoDown(dateKey, index) {
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                if (index >= data[dateKey].todos.length - 1) return;
+                const temp = data[dateKey].todos[index];
+                data[dateKey].todos[index] = data[dateKey].todos[index + 1];
+                data[dateKey].todos[index + 1] = temp;
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
+                updateTodoBoxOnly(dateKey);
+            }
         }
 
         function updateTodoBoxOnly(dateKey) {
@@ -594,7 +620,7 @@
             const box = document.getElementById(`todo-box-${dateKey}`);
             if (box && data[dateKey]) {
                 box.innerHTML = '';
-                (data[dateKey].todos || []).forEach((item) => {
+                (data[dateKey].todos || []).forEach((item, index) => {
                     let bgClass = 'bg-white text-slate-700 border-slate-100';
                     if (item.type === 'meeting') bgClass = 'bg-rose-100 text-rose-900 border-rose-200 font-semibold';
                     else if (item.type === 'share') bgClass = 'bg-amber-100 text-amber-900 border-amber-200 font-semibold';
@@ -621,8 +647,12 @@
 
                     itemDiv.innerHTML = `
                         <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
-                        <div class="flex items-center gap-1 ml-1">
-                            <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold" title="삭제">×</button>
+                        <div class="flex items-center gap-0.5 ml-1 shrink-0">
+                            <div class="flex flex-col">
+                                <button onclick="moveTodoUp('${dateKey}', ${index})" class="text-[8px] text-slate-400 hover:text-indigo-600 leading-none px-0.5" title="위로">▲</button>
+                                <button onclick="moveTodoDown('${dateKey}', ${index})" class="text-[8px] text-slate-400 hover:text-indigo-600 leading-none px-0.5" title="아래로">▼</button>
+                            </div>
+                            <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
                         </div>
                     `;
                     box.appendChild(itemDiv);
@@ -654,6 +684,7 @@
                     (data[dateKey].tags || []).forEach((tag, idx) => {
                         let tagStyle = 'bg-indigo-50 text-indigo-700';
                         if (tag === 'FD') tagStyle = 'bg-amber-100 text-amber-800';
+                        else if (tag === '당직') tagStyle = 'bg-yellow-100 text-yellow-800';
                         else if (tag.startsWith('시간외')) tagStyle = 'bg-orange-100 text-orange-800';
                         else if (tag === '교육') tagStyle = 'bg-blue-100 text-blue-800';
                         else if (tag === '휴가') tagStyle = 'bg-rose-100 text-rose-800';
