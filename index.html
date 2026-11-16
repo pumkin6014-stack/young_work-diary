@@ -388,7 +388,7 @@
 
             inputField.value = '';
             loadAllMonthValues();
-            setTimeout(() => inputField.focus(), 50);
+            setTimeout(() => inputField.focus(), 100);
         }
 
         function removeSummaryItem(monthNum, itemId) {
@@ -486,7 +486,6 @@
             if (!Array.isArray(items)) {
                 items = [];
             } else {
-                // 비정상적인 데이터(문자열 '0' 등) 필터링 정리
                 items = items.filter(i => i && typeof i === 'object' && i.text !== undefined);
             }
 
@@ -545,7 +544,12 @@
 
             inputField.value = '';
             loadMonthNotes();
-            setTimeout(() => inputField.focus(), 50);
+            
+            // 엔터 직후 커서가 입력창에 확실히 고정되도록 강제 포커스
+            setTimeout(() => {
+                const targetInput = document.getElementById('monthly-note-input');
+                if (targetInput) targetInput.focus();
+            }, 100);
         }
 
         function removeMonthNoteItem(itemId) {
