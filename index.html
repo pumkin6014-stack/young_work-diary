@@ -92,10 +92,10 @@
     </script>
 
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f7f6f3; }
         .notebook-zone {
             background-color: #ffffff;
-            background-image: linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            background-image: linear-gradient(to bottom, #f1f0eb 1px, transparent 1px);
             background-size: 100% 30px;
         }
         .notebook-textarea {
@@ -114,27 +114,27 @@
         }
     </style>
 </head>
-<body class="min-h-screen text-slate-800 flex flex-col p-2 sm:p-4">
+<body class="min-h-screen text-stone-800 flex flex-col p-2 sm:p-4">
 
-    <div class="flex-1 flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-        <!-- 좌측 사이드 네비게이션 바 (차분한 슬레이트 그레이 톤) -->
-        <aside class="w-16 sm:w-20 bg-slate-800 text-white flex flex-col items-center py-5 justify-between shrink-0 select-none relative z-40 shadow-inner">
+    <div class="flex-1 flex bg-white rounded-xl shadow-xs border border-stone-200 overflow-hidden relative">
+        <!-- 좌측 사이드 네비게이션 바 (따뜻하고 차분한 웜톤 베이지-그레이) -->
+        <aside class="w-16 sm:w-20 bg-stone-700 text-stone-100 flex flex-col items-center py-5 justify-between shrink-0 select-none relative z-40 shadow-inner">
             <div class="flex flex-col items-center space-y-6 w-full">
-                <div class="text-[10px] font-black tracking-widest text-slate-400 opacity-0">SDM</div>
+                <div class="text-[10px] font-black tracking-widest text-stone-400 opacity-0">SDM</div>
                 <div class="space-y-3 w-full px-2">
-                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-slate-600 text-white shadow-sm transition-all">
+                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-stone-500 text-white shadow-xs transition-all">
                         <span class="text-xs font-bold">M</span>
                         <span class="text-[9px] mt-0.5">월간</span>
                     </button>
-                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-300 hover:bg-slate-700 transition-all">
+                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all">
                         <span class="text-xs font-bold">W</span>
                         <span class="text-[9px] mt-0.5">주간</span>
                     </button>
-                    <button onclick="switchView('daily')" id="tab-daily" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-300 hover:bg-slate-700 transition-all">
+                    <button onclick="switchView('daily')" id="tab-daily" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all">
                         <span class="text-xs font-bold">D</span>
                         <span class="text-[9px] mt-0.5">일간</span>
                     </button>
-                    <button onclick="switchView('minutes')" id="tab-minutes" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-300 hover:bg-slate-700 transition-all">
+                    <button onclick="switchView('minutes')" id="tab-minutes" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all">
                         <span class="text-xs font-bold">N</span>
                         <span class="text-[9px] mt-0.5">회의록</span>
                     </button>
@@ -142,30 +142,30 @@
 
                 <!-- 월별 핵심요약 버튼 -->
                 <div class="w-full px-2 mt-4">
-                    <button onclick="toggleSummaryPanel()" class="w-full py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold flex flex-col items-center justify-center transition-all border border-slate-600 shadow-xs" title="1~12월 전체 요약">
+                    <button onclick="toggleSummaryPanel()" class="w-full py-2.5 rounded-xl bg-stone-600 hover:bg-stone-500 text-stone-200 text-[10px] font-bold flex flex-col items-center justify-center transition-all border border-stone-500 shadow-xs" title="1~12월 전체 요약">
                         <span class="text-xs">📌</span>
-                        <span class="text-[8px] mt-0.5 text-slate-300 font-medium">월별요약</span>
+                        <span class="text-[8px] mt-0.5 text-stone-300 font-medium">월별요약</span>
                     </button>
                 </div>
             </div>
 
-            <div class="text-[9px] text-slate-400 font-mono text-center px-1">
+            <div class="text-[9px] text-stone-400 font-mono text-center px-1">
                 SDM<br>PLANNER
             </div>
 
-            <!-- 세련된 카드 스타일의 1~12월 전체 펼쳐짐 패널 -->
-            <div id="summary-panel" class="absolute left-full top-0 h-full w-0 bg-slate-900 border-r border-slate-800 shadow-2xl overflow-hidden flex flex-col z-50 pointer-events-none opacity-0">
+            <!-- 박스 없이 심플하게 펼쳐지는 1~12월 요약 패널 -->
+            <div id="summary-panel" class="absolute left-full top-0 h-full w-0 bg-stone-800 text-stone-200 border-r border-stone-700 shadow-2xl overflow-hidden flex flex-col z-50 pointer-events-none opacity-0">
                 <div class="p-4 w-80 flex flex-col h-full justify-between">
                     <div class="space-y-3 flex-1 flex flex-col overflow-hidden">
-                        <div class="flex justify-between items-center border-b border-slate-800 pb-2.5 shrink-0">
-                            <h3 id="summary-panel-main-title" class="text-xs font-bold text-slate-200 tracking-tight">2026년 월별 핵심요약</h3>
-                            <button onclick="toggleSummaryPanel()" class="text-slate-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded transition-all">✕</button>
+                        <div class="flex justify-between items-center border-b border-stone-700 pb-2.5 shrink-0">
+                            <h3 id="summary-panel-main-title" class="text-xs font-bold text-stone-200 tracking-tight">2026년 월별 핵심요약</h3>
+                            <button onclick="toggleSummaryPanel()" class="text-stone-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded transition-all">✕</button>
                         </div>
                         
-                        <!-- 1~12월 카드가 세로로 깔끔하게 나열되는 영역 -->
-                        <div id="all-months-container" class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar"></div>
+                        <!-- 테두리 박스 없이 심플하게 나열되는 영역 -->
+                        <div id="all-months-container" class="flex-1 overflow-y-auto space-y-3 pr-1"></div>
                     </div>
-                    <div class="text-[9px] text-slate-500 text-center pt-2.5 border-t border-slate-800 shrink-0">
+                    <div class="text-[9px] text-stone-400 text-center pt-2.5 border-t border-stone-700 shrink-0">
                         입력 시 실시간 자동 저장됩니다.
                     </div>
                 </div>
@@ -173,28 +173,28 @@
         </aside>
 
         <!-- 우측 메인 작업 영역 -->
-        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/50 relative">
-            <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0 shadow-2xs">
+        <div class="flex-1 flex flex-col overflow-hidden bg-stone-50/40 relative">
+            <header class="bg-white border-b border-stone-200 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0 shadow-2xs">
                 <div class="flex items-center gap-3">
-                    <h1 id="view-title" class="text-lg font-bold text-slate-800 tracking-tight">월간 다이어리</h1>
+                    <h1 id="view-title" class="text-lg font-bold text-stone-800 tracking-tight">월간 다이어리</h1>
                     <div class="relative">
-                        <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="전체 기간 내용 검색..." class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 pl-8 focus:outline-none focus:ring-1 focus:ring-slate-400 w-40 sm:w-56 text-slate-700">
-                        <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+                        <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="전체 기간 내용 검색..." class="text-xs bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 pl-8 focus:outline-none focus:ring-1 focus:ring-stone-400 w-40 sm:w-56 text-stone-700">
+                        <span class="absolute left-3 top-2.5 text-stone-400 text-xs">🔍</span>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <button id="login-btn" onclick="handleGoogleLogin()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-200 shadow-2xs transition-all">구글 로그인</button>
+                    <button id="login-btn" onclick="handleGoogleLogin()" class="px-3 py-1.5 text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200 rounded-xl hover:bg-stone-200 shadow-2xs transition-all">구글 로그인</button>
 
-                    <div id="date-navigator" class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                        <span id="current-date-title" class="text-sm font-bold text-slate-700">2026년 11월</span>
+                    <div id="date-navigator" class="flex items-center gap-2 bg-stone-50 px-3 py-1.5 rounded-xl border border-stone-200">
+                        <span id="current-date-title" class="text-sm font-bold text-stone-700">2026년 11월</span>
                         <div class="flex gap-1">
-                            <button onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-600 transition-all">‹</button>
-                            <button onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-600 transition-all">›</button>
+                            <button onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">‹</button>
+                            <button onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">›</button>
                         </div>
                     </div>
-                    <button onclick="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-2xs text-slate-700 transition-all">오늘</button>
-                    <button onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 hidden md:block transition-all">인쇄 / PDF</button>
+                    <button onclick="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-stone-200 rounded-xl hover:bg-stone-50 shadow-2xs text-stone-700 transition-all">오늘</button>
+                    <button onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-stone-200 rounded-xl hover:bg-stone-50 text-stone-700 hidden md:block transition-all">인쇄 / PDF</button>
                 </div>
             </header>
 
@@ -206,16 +206,16 @@
     <div id="tag-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-slate-800 text-sm">근무 태그 선택</h3>
-                <button onclick="closeTagModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                <h3 class="font-bold text-stone-800 text-sm">근무 태그 선택</h3>
+                <button onclick="closeTagModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <button onclick="selectTag('FD')" class="p-2.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs hover:bg-amber-100">FD</button>
-                <button onclick="selectTag('당직')" class="p-2.5 rounded-xl bg-yellow-100 text-yellow-800 border border-yellow-300 font-bold text-xs hover:bg-yellow-200">당직</button>
+                <button onclick="selectTag('당직')" class="p-2.5 rounded-xl bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold text-xs hover:bg-yellow-100">당직</button>
                 <button onclick="selectTag('시간외1')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1</button>
                 <button onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1.5</button>
                 <button onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외2</button>
-                <button onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 font-bold text-xs hover:bg-blue-100">교육</button>
+                <button onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-stone-100 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-200">교육</button>
                 <button onclick="selectTag('휴가')" class="col-span-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
             </div>
         </div>
@@ -225,33 +225,33 @@
     <div id="chef-vacation-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-slate-800 text-sm">휴가자 선택</h3>
-                <button onclick="closeChefModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                <h3 class="font-bold text-stone-800 text-sm">휴가자 선택</h3>
+                <button onclick="closeChefModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
             </div>
             <div class="grid grid-cols-1 gap-2">
-                <button onclick="selectChefTag('김대성')" class="p-3 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs hover:bg-slate-200 text-left">김대성</button>
-                <button onclick="selectChefTag('최정란')" class="p-3 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs hover:bg-slate-200 text-left">최정란</button>
-                <button onclick="selectChefTag('황부용')" class="p-3 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs hover:bg-slate-200 text-left">황부용</button>
+                <button onclick="selectChefTag('김대성')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">김대성</button>
+                <button onclick="selectChefTag('최정란')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">최정란</button>
+                <button onclick="selectChefTag('황부용')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">황부용</button>
             </div>
         </div>
     </div>
 
     <!-- 날짜 셀 우클릭 컨텍스트 메뉴 -->
-    <div id="date-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-48 text-xs">
-        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">날짜 메뉴</div>
-        <button onclick="copyDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 날짜 전체 내용 복사</button>
-        <button onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📌</span> 날짜 전체 붙여넣기</button>
+    <div id="date-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 w-48 text-xs">
+        <div class="px-3 py-1 font-bold text-stone-400 text-[10px] border-b border-stone-100 mb-1">날짜 메뉴</div>
+        <button onclick="copyDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📋</span> 날짜 전체 내용 복사</button>
+        <button onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📌</span> 날짜 전체 붙여넣기</button>
     </div>
 
     <!-- 개별 할 일 우클릭 컨텍스트 메뉴 -->
-    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-36 text-xs">
-        <div class="px-3 py-1 font-bold text-slate-400 text-[10px] border-b border-slate-100 mb-1">하이라이트</div>
-        <button onclick="changeTodoType('default')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-200 inline-block"></span> 기본</button>
+    <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 w-36 text-xs">
+        <div class="px-3 py-1 font-bold text-stone-400 text-[10px] border-b border-stone-100 mb-1">하이라이트</div>
+        <button onclick="changeTodoType('default')" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-stone-300 inline-block"></span> 기본</button>
         <button onclick="changeTodoType('meeting')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span> 회의&교육</button>
         <button onclick="changeTodoType('share')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> 업무공유</button>
         <button onclick="changeTodoType('notice')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> 공지</button>
-        <div class="border-t border-slate-100 my-1"></div>
-        <button onclick="copySingleTodoAction()" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2"><span>📋</span> 내용 복사</button>
+        <div class="border-t border-stone-100 my-1"></div>
+        <button onclick="copySingleTodoAction()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📋</span> 내용 복사</button>
     </div>
 
     <script>
@@ -283,7 +283,7 @@
             renderAllMonthSummaries();
 
             if (isSummaryOpen) {
-                panel.style.width = '320px';
+                panel.style.width = '300px';
                 panel.style.opacity = '1';
                 panel.classList.remove('pointer-events-none');
             } else {
@@ -308,10 +308,10 @@
                 const val = summaries[summaryKey] || '';
 
                 const div = document.createElement('div');
-                div.className = 'bg-slate-800/90 border border-slate-700/80 rounded-xl p-2.5 space-y-1.5 shadow-xs hover:border-slate-600 transition-all';
+                div.className = 'border-b border-stone-700/60 pb-2.5 space-y-1';
                 div.innerHTML = `
-                    <div class="text-[11px] font-bold text-slate-300">${m}월</div>
-                    <textarea oninput="saveAllMonthSummary(${m}, this.value)" placeholder="${m}월 주요 일정..." class="w-full h-12 bg-slate-950/60 border border-slate-700/60 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400 resize-none placeholder:text-slate-600">${val}</textarea>
+                    <div class="text-[11px] font-bold text-stone-300 tracking-wide">${m}월</div>
+                    <textarea oninput="saveAllMonthSummary(${m}, this.value)" placeholder="${m}월 주요 일정..." class="w-full h-11 bg-transparent border-0 border-b border-transparent hover:border-stone-600 focus:border-stone-400 p-0 text-xs text-stone-100 focus:outline-none resize-none placeholder:text-stone-500">${val}</textarea>
                 `;
                 container.appendChild(div);
             }
@@ -334,8 +334,8 @@
                 const btn = document.getElementById(`tab-${v}`);
                 if(btn) {
                     btn.className = (v === view) 
-                        ? "w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-slate-600 text-white shadow-sm transition-all"
-                        : "w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-slate-300 hover:bg-slate-700 transition-all";
+                        ? "w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-stone-500 text-white shadow-xs transition-all"
+                        : "w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all";
                 }
             });
             const titles = { monthly: '월간 다이어리', weekly: '주간 다이어리', daily: '일간 다이어리', minutes: '회의록' };
@@ -363,22 +363,22 @@
         function createMonthlyCellHTML(year, month, day, dateKey, isCurrentMonth = true) {
             const opacityClass = isCurrentMonth ? 'bg-white' : 'bg-white/60 opacity-60';
             return `
-                <div class="${opacityClass} min-h-[180px] p-2.5 flex flex-col justify-between relative border border-slate-200" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
+                <div class="${opacityClass} min-h-[180px] p-2.5 flex flex-col justify-between relative border border-stone-200" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
                     <div>
                         <div class="flex items-center justify-between mb-1">
-                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-slate-700 cursor-pointer hover:text-slate-900 shrink-0">${day}</span>
+                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-stone-700 cursor-pointer hover:text-stone-900 shrink-0">${day}</span>
                             <div class="flex flex-wrap gap-1 items-center justify-end overflow-hidden max-h-[45px]" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
                     <div class="flex-1 overflow-y-auto space-y-1 mb-1 max-h-[90px] todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
-                            <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">
-                            <button onclick="addTodoItem('${dateKey}')" class="bg-slate-700 text-white px-3 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-slate-800 transition-all">+</button>
+                            <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                            <button onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
                         </div>
                         <div class="flex items-center justify-between gap-1 pt-0.5">
-                            <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold border border-slate-200 transition-all">+ 휴가</button>
-                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold border border-slate-200 transition-all">+ 근무</button>
+                            <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 휴가</button>
+                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 근무</button>
                         </div>
                     </div>
                 </div>
@@ -397,10 +397,10 @@
             
             let html = `
                 <div class="w-full bg-white border-0 overflow-hidden">
-                    <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 bg-slate-50 py-3 border-b border-slate-200">
-                        <div>월요일</div><div>화요일</div><div>수요일</div><div>목요일</div><div>금요일</div><div class="text-slate-500">토요일</div><div class="text-rose-500">일요일</div>
+                    <div class="grid grid-cols-7 text-center text-xs font-bold text-stone-400 bg-stone-50 py-3 border-b border-stone-200">
+                        <div>월요일</div><div>화요일</div><div>수요일</div><div>목요일</div><div>금요일</div><div class="text-stone-500">토요일</div><div class="text-rose-500">일요일</div>
                     </div>
-                    <div class="grid grid-cols-7 gap-[1px] bg-slate-200">
+                    <div class="grid grid-cols-7 gap-[1px] bg-stone-200">
             `;
 
             const prevMonth = month === 0 ? 11 : month - 1;
@@ -432,10 +432,10 @@
 
         function createWeeklyCellHTML(dayTitle, dateKey, year, month, day) {
             return `
-                <div class="p-5 flex flex-col justify-between min-h-[480px] border-r border-b border-slate-200 bg-white" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
+                <div class="p-5 flex flex-col justify-between min-h-[480px] border-r border-b border-stone-200 bg-white" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
                     <div>
-                        <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-200">
-                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold text-slate-800 cursor-pointer hover:text-slate-900 shrink-0">${dayTitle}</span>
+                        <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-stone-200">
+                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold text-stone-800 cursor-pointer hover:text-stone-900 shrink-0">${dayTitle}</span>
                             <div class="flex flex-wrap gap-1 items-center justify-end" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
@@ -444,12 +444,12 @@
                             <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
-                                    <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">
-                                    <button onclick="addTodoItem('${dateKey}')" class="bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0 hover:bg-slate-800 transition-all">+</button>
+                                    <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                                    <button onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
-                                    <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold border border-slate-200 transition-all">+ 휴가</button>
-                                    <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold border border-slate-200 transition-all">+ 근무</button>
+                                    <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 휴가</button>
+                                    <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 근무</button>
                                 </div>
                             </div>
                         </div>
@@ -457,8 +457,8 @@
                             <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" class="w-full h-full min-h-[120px] text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
                         </div>
                     </div>
-                    <div class="text-right pt-2.5 border-t border-slate-200 shrink-0">
-                        <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs text-slate-600 font-semibold hover:underline">상세 기록 →</button>
+                    <div class="text-right pt-2.5 border-t border-stone-200 shrink-0">
+                        <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs text-stone-600 font-semibold hover:underline">상세 기록 →</button>
                     </div>
                 </div>
             `;
@@ -474,7 +474,7 @@
             
             document.getElementById('current-date-title').innerText = `${firstday.getMonth()+1}월 ${firstday.getDate()}일 ~ ${lastday.getMonth()+1}월 ${lastday.getDate()}일`;
 
-            const daysName = ['월요일', '화요일', '수요일', '목요일', '금요일', '<span class="text-slate-500">토요일</span>', '<span class="text-rose-500">일요일</span>'];
+            const daysName = ['월요일', '화요일', '수요일', '목요일', '금요일', '<span class="text-stone-500">토요일</span>', '<span class="text-rose-500">일요일</span>'];
             let topRowHTML = '', bottomRowHTML = '';
 
             for (let i = 0; i < 7; i++) {
@@ -487,9 +487,9 @@
             }
 
             document.getElementById('view-container').innerHTML = `
-                <div class="w-full bg-white border-t border-l border-slate-200">
+                <div class="w-full bg-white border-t border-l border-stone-200">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${topRowHTML}</div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${bottomRowHTML}<div class="min-h-[480px] border-r border-b border-slate-200 bg-white/50"></div></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${bottomRowHTML}<div class="min-h-[480px] border-r border-b border-stone-200 bg-white/50"></div></div>
                 </div>
             `;
         }
@@ -503,27 +503,27 @@
 
             document.getElementById('view-container').innerHTML = `
                 <div class="w-full p-8 space-y-6 bg-white min-h-[600px] flex flex-col" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
-                    <div class="border-b border-slate-200 pb-4 flex justify-between items-center shrink-0">
+                    <div class="border-b border-stone-200 pb-4 flex justify-between items-center shrink-0">
                         <div class="flex items-center gap-4">
-                            <h2 class="text-xl font-bold text-slate-800">${month}월 ${day}일 ${dayName}요일</h2>
+                            <h2 class="text-xl font-bold text-stone-800">${month}월 ${day}일 ${dayName}요일</h2>
                             <div class="flex flex-wrap gap-1.5" id="tags-box-${dateKey}"></div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="openChefModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 hover:bg-slate-200 transition-all">+ 휴가 추가</button>
-                            <button onclick="openTagModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 hover:bg-slate-200 transition-all">+ 근무 태그 추가</button>
+                            <button onclick="openChefModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 hover:bg-stone-200 transition-all">+ 휴가 추가</button>
+                            <button onclick="openTagModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 hover:bg-stone-200 transition-all">+ 근무 태그 추가</button>
                         </div>
                     </div>
                     <div class="space-y-3 shrink-0">
-                        <div class="bg-slate-50/70 border border-slate-200 p-4 rounded-xl space-y-2">
+                        <div class="bg-stone-50/70 border border-stone-200 p-4 rounded-xl space-y-2">
                             <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
-                                <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">
-                                <button onclick="addTodoItem('${dateKey}')" class="bg-slate-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-slate-800 transition-all">추가</button>
+                                <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                                <button onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">추가</button>
                             </div>
                         </div>
                     </div>
                     <div class="flex-1 flex flex-col space-y-2 pt-2">
-                        <div class="text-xs font-bold text-slate-500 shrink-0">일일 메모</div>
+                        <div class="text-xs font-bold text-stone-500 shrink-0">일일 메모</div>
                         <div class="flex-1 notebook-zone p-0">
                             <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" class="w-full h-full min-h-[180px] text-sm p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
                         </div>
@@ -538,18 +538,18 @@
 
             document.getElementById('view-container').innerHTML = `
                 <div class="w-full bg-white grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
-                    <div class="md:col-span-4 border-r border-slate-200 p-5 bg-slate-50/50 flex flex-col justify-between">
+                    <div class="md:col-span-4 border-r border-stone-200 p-5 bg-stone-50/50 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">회의록 목록</h3>
-                                <button onclick="createMinute()" class="bg-slate-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all">+ 회의 기록</button>
+                                <h3 class="text-xs font-bold text-stone-600 uppercase tracking-wide">회의록 목록</h3>
+                                <button onclick="createMinute()" class="bg-stone-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-stone-700 transition-all">+ 회의 기록</button>
                             </div>
                             <div class="space-y-2 overflow-y-auto max-h-[500px]">
-                                ${minutes.length === 0 ? '<p class="text-xs text-slate-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
+                                ${minutes.length === 0 ? '<p class="text-xs text-stone-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
                                 ${minutes.map(m => `
-                                    <div onclick="selectMinute(${m.id})" class="p-3.5 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-slate-100 border-slate-300 shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50'}">
-                                        <div class="text-xs font-bold text-slate-800 truncate">${m.title || '제목 없음'}</div>
-                                        <div class="text-[10px] text-slate-400 mt-1">${m.date || ''} · 참석자: ${m.attendees || '미지정'}</div>
+                                    <div onclick="selectMinute(${m.id})" class="p-3.5 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-stone-100 border-stone-300 shadow-2xs' : 'bg-white border-stone-200 hover:bg-stone-50'}">
+                                        <div class="text-xs font-bold text-stone-800 truncate">${m.title || '제목 없음'}</div>
+                                        <div class="text-[10px] text-stone-400 mt-1">${m.date || ''} · 참석자: ${m.attendees || '미지정'}</div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -563,20 +563,20 @@
         }
 
         function renderMinuteEditor(minute) {
-            if (!minute) return `<div class="flex items-center justify-center h-full text-slate-400 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
+            if (!minute) return `<div class="flex items-center justify-center h-full text-stone-400 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
             return `
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-                        <h3 class="font-bold text-slate-800 text-sm">회의록 상세 작성</h3>
+                    <div class="flex justify-between items-center border-b border-stone-200 pb-3">
+                        <h3 class="font-bold text-stone-800 text-sm">회의록 상세 작성</h3>
                         <button onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2.5 py-1 rounded font-semibold transition-all">삭제</button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목" class="text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">
-                        <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">
+                        <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목" class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                        <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
                     </div>
-                    <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름" class="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">
-                    <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의 내용..." class="w-full h-32 text-xs p-3.5 border border-slate-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">${minute.content || ''}</textarea>
-                    <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="실행 과제..." class="w-full h-24 text-xs p-3.5 border border-slate-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700">${minute.actions || ''}</textarea>
+                    <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름" class="w-full text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                    <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의 내용..." class="w-full h-32 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.content || ''}</textarea>
+                    <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="실행 과제..." class="w-full h-24 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.actions || ''}</textarea>
                 </div>
             `;
         }
@@ -713,7 +713,7 @@
             if (box && data[dateKey]) {
                 box.innerHTML = '';
                 (data[dateKey].todos || []).forEach((item, index) => {
-                    let bgClass = 'bg-white text-slate-700 border-slate-100';
+                    let bgClass = 'bg-white text-stone-700 border-stone-100';
                     if (item.type === 'meeting') bgClass = 'bg-rose-100 text-rose-900 border-rose-200 font-semibold';
                     else if (item.type === 'share') bgClass = 'bg-amber-100 text-amber-900 border-amber-200 font-semibold';
                     else if (item.type === 'notice') bgClass = 'bg-emerald-100 text-emerald-900 border-emerald-200 font-semibold';
@@ -741,10 +741,10 @@
                         <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
                         <div class="flex items-center gap-0.5 ml-1 shrink-0">
                             <div class="flex flex-col">
-                                <button onclick="moveTodoUp('${dateKey}', ${index})" class="text-[8px] text-slate-400 hover:text-slate-700 leading-none px-0.5" title="위로">▲</button>
-                                <button onclick="moveTodoDown('${dateKey}', ${index})" class="text-[8px] text-slate-400 hover:text-slate-700 leading-none px-0.5" title="아래로">▼</button>
+                                <button onclick="moveTodoUp('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
+                                <button onclick="moveTodoDown('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
                             </div>
-                            <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-slate-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
+                            <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
                         </div>
                     `;
                     box.appendChild(itemDiv);
@@ -774,13 +774,13 @@
                 if (tagsBox) {
                     tagsBox.innerHTML = '';
                     (data[dateKey].tags || []).forEach((tag, idx) => {
-                        let tagStyle = 'bg-slate-100 text-slate-700';
+                        let tagStyle = 'bg-stone-100 text-stone-700';
                         if (tag === 'FD') tagStyle = 'bg-amber-100 text-amber-800';
                         else if (tag === '당직') tagStyle = 'bg-yellow-100 text-yellow-800';
                         else if (tag.startsWith('시간외')) tagStyle = 'bg-orange-100 text-orange-800';
-                        else if (tag === '교육') tagStyle = 'bg-blue-100 text-blue-800';
+                        else if (tag === '교육') tagStyle = 'bg-stone-200 text-stone-800';
                         else if (tag === '휴가') tagStyle = 'bg-rose-100 text-rose-800';
-                        else if (tag.startsWith('휴가:')) tagStyle = 'bg-slate-100 text-slate-700';
+                        else if (tag.startsWith('휴가:')) tagStyle = 'bg-stone-100 text-stone-700';
 
                         tagsBox.innerHTML += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${tagStyle} mr-1 mb-0.5">${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 opacity-60">×</button></span>`;
                     });
