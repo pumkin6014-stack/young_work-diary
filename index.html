@@ -146,7 +146,7 @@
 
                 <!-- 월별 핵심요약 버튼 -->
                 <div class="w-full px-2 mt-4">
-                    <button onclick="toggleSummaryPanel()" class="w-full py-2.5 rounded-xl bg-stone-600 hover:bg-stone-500 text-stone-200 text-[10px] font-bold flex flex-col items-center justify-center transition-all border border-stone-500 shadow-xs" title="1~12월 전체 요약">
+                    <button type="button" onclick="toggleSummaryPanel()" class="w-full py-2.5 rounded-xl bg-stone-600 hover:bg-stone-500 text-stone-200 text-[10px] font-bold flex flex-col items-center justify-center transition-all border border-stone-500 shadow-xs" title="1~12월 전체 요약">
                         <span class="text-xs">📌</span>
                         <span class="text-[8px] mt-0.5 text-stone-300 font-medium">월별요약</span>
                     </button>
@@ -163,7 +163,7 @@
                     <div class="space-y-3 flex-1 flex flex-col overflow-hidden">
                         <div class="flex justify-between items-center border-b border-stone-700 pb-2.5 shrink-0">
                             <h3 id="summary-panel-main-title" class="text-xs font-bold text-stone-200 tracking-tight">2026년 월별 핵심요약</h3>
-                            <button onclick="toggleSummaryPanel()" class="text-stone-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded transition-all">✕</button>
+                            <button type="button" onclick="toggleSummaryPanel()" class="text-stone-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded transition-all">✕</button>
                         </div>
                         
                         <!-- 1~12월 목록 영역 -->
@@ -176,7 +176,7 @@
                                             <div id="summary-items-${m}" class="space-y-1.5 pl-0.5"></div>
                                             <div class="flex gap-1 pt-1">
                                                 <input type="text" id="summary-input-${m}" onkeydown="handleSummaryKeyDown(event, ${m})" placeholder="주요 일정 입력..." class="w-full text-[11px] px-2.5 py-1 bg-stone-900/60 border border-stone-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-500 text-stone-100 placeholder:text-stone-500">
-                                                <button onclick="addSummaryItem(${m})" class="bg-stone-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-stone-500 transition-all">+</button>
+                                                <button type="button" onclick="addSummaryItem(${m})" class="bg-stone-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-stone-500 transition-all">+</button>
                                             </div>
                                         </div>
                                     `);
@@ -211,12 +211,10 @@
                     <div id="date-navigator" class="flex items-center gap-2 bg-stone-50 px-3 py-1.5 rounded-xl border border-stone-200">
                         <span id="current-date-title" class="text-sm font-bold text-stone-700">2026년 11월</span>
                         <div class="flex gap-1">
-                            <button onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">‹</button>
-                            <button onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">›</button>
+                            <button type="button" onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">‹</button>
+                            <button type="button" onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">›</button>
                         </div>
                     </div>
-                    <button onclick="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-stone-200 rounded-xl hover:bg-stone-50 shadow-2xs text-stone-700 transition-all">오늘</button>
-                    <button onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-stone-200 rounded-xl hover:bg-stone-50 text-stone-700 hidden md:block transition-all">인쇄 / PDF</button>
                 </div>
             </header>
 
@@ -229,16 +227,16 @@
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
                 <h3 class="font-bold text-stone-800 text-sm">근무 태그 선택</h3>
-                <button onclick="closeTagModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
+                <button type="button" onclick="closeTagModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="selectTag('FD')" class="p-2.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs hover:bg-amber-100">FD</button>
-                <button onclick="selectTag('당직')" class="p-2.5 rounded-xl bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold text-xs hover:bg-yellow-100">당직</button>
-                <button onclick="selectTag('시간외1')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1</button>
-                <button onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1.5</button>
-                <button onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외2</button>
-                <button onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-stone-100 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-200">교육</button>
-                <button onclick="selectTag('휴가')" class="col-span-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
+                <button type="button" onclick="selectTag('FD')" class="p-2.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 font-bold text-xs hover:bg-amber-100">FD</button>
+                <button type="button" onclick="selectTag('당직')" class="p-2.5 rounded-xl bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold text-xs hover:bg-yellow-100">당직</button>
+                <button type="button" onclick="selectTag('시간외1')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1</button>
+                <button type="button" onclick="selectTag('시간외1.5')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외1.5</button>
+                <button type="button" onclick="selectTag('시간외2')" class="p-2.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 font-bold text-xs hover:bg-orange-100">시간외2</button>
+                <button type="button" onclick="selectTag('교육')" class="p-2.5 rounded-xl bg-stone-100 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-200">교육</button>
+                <button type="button" onclick="selectTag('휴가')" class="col-span-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs hover:bg-rose-100">휴가</button>
             </div>
         </div>
     </div>
@@ -248,12 +246,12 @@
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
                 <h3 class="font-bold text-stone-800 text-sm">휴가자 선택</h3>
-                <button onclick="closeChefModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
+                <button type="button" onclick="closeChefModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
             </div>
             <div class="grid grid-cols-1 gap-2">
-                <button onclick="selectChefTag('김대성')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">김대성</button>
-                <button onclick="selectChefTag('최정란')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">최정란</button>
-                <button onclick="selectChefTag('황부용')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">황부용</button>
+                <button type="button" onclick="selectChefTag('김대성')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">김대성</button>
+                <button type="button" onclick="selectChefTag('최정란')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">최정란</button>
+                <button type="button" onclick="selectChefTag('황부용')" class="p-3 rounded-xl bg-stone-50 text-stone-700 border border-stone-200 font-bold text-xs hover:bg-stone-100 text-left">황부용</button>
             </div>
         </div>
     </div>
@@ -261,19 +259,19 @@
     <!-- 날짜 셀 우클릭 컨텍스트 메뉴 -->
     <div id="date-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 w-48 text-xs">
         <div class="px-3 py-1 font-bold text-stone-400 text-[10px] border-b border-stone-100 mb-1">날짜 메뉴</div>
-        <button onclick="copyDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📋</span> 날짜 전체 내용 복사</button>
-        <button onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📌</span> 날짜 전체 붙여넣기</button>
+        <button type="button" onclick="copyDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📋</span> 날짜 전체 내용 복사</button>
+        <button type="button" onclick="pasteDateContent()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📌</span> 날짜 전체 붙여넣기</button>
     </div>
 
     <!-- 개별 할 일 우클릭 컨텍스트 메뉴 -->
     <div id="todo-context-menu" class="fixed z-50 hidden bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 w-36 text-xs">
         <div class="px-3 py-1 font-bold text-stone-400 text-[10px] border-b border-stone-100 mb-1">하이라이트</div>
-        <button onclick="changeTodoType('default')" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-stone-300 inline-block"></span> 기본</button>
-        <button onclick="changeTodoType('meeting')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span> 회의&교육</button>
-        <button onclick="changeTodoType('share')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> 업무공유</button>
-        <button onclick="changeTodoType('notice')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> 공지</button>
+        <button type="button" onclick="changeTodoType('default')" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-stone-300 inline-block"></span> 기본</button>
+        <button type="button" onclick="changeTodoType('meeting')" class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span> 회의&교육</button>
+        <button type="button" onclick="changeTodoType('share')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> 업무공유</button>
+        <button type="button" onclick="changeTodoType('notice')" class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-emerald-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> 공지</button>
         <div class="border-t border-stone-100 my-1"></div>
-        <button onclick="copySingleTodoAction()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📋</span> 내용 복사</button>
+        <button type="button" onclick="copySingleTodoAction()" class="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 font-medium flex items-center gap-2"><span>📋</span> 내용 복사</button>
     </div>
 
     <script>
@@ -347,8 +345,8 @@
             div.id = `summary-item-row-${monthNum}-${itemId}`;
             div.innerHTML = `
                 <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
-                <input type="text" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
-                <button onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                <input type="text" id="sum-text-${monthNum}-${itemId}" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <button type="button" onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
             `;
             container.appendChild(div);
         }
@@ -463,14 +461,14 @@
             div.className = "flex items-center gap-1.5 group bg-white px-2 py-1.5 rounded-lg border border-stone-200 shadow-2xs";
             div.id = `month-note-row-${itemId}`;
             div.innerHTML = `
-                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesDataOnly()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
-                <input type="text" id="month-note-input-field-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesDataOnly()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesDataDirect()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
+                <input type="text" id="mn-text-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesDataDirect()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
                 <div class="flex items-center gap-0.5 ml-1 shrink-0">
                     <div class="flex flex-col">
-                        <button onclick="moveMonthNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
-                        <button onclick="moveMonthNoteDown('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
+                        <button type="button" onclick="moveMonthNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
+                        <button type="button" onclick="moveMonthNoteDown('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
                     </div>
-                    <button onclick="removeMonthNoteItem('${itemId}')" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
+                    <button type="button" onclick="removeMonthNoteItem('${itemId}')" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
                 </div>
             `;
             container.appendChild(div);
@@ -548,7 +546,7 @@
             loadMonthNotes();
             
             setTimeout(() => {
-                const el = document.getElementById(`month-note-input-field-${itemId}`);
+                const el = document.getElementById(`mn-text-${itemId}`);
                 if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
             }, 10);
         }
@@ -574,13 +572,12 @@
             loadMonthNotes();
             
             setTimeout(() => {
-                const el = document.getElementById(`month-note-input-field-${itemId}`);
+                const el = document.getElementById(`mn-text-${itemId}`);
                 if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
             }, 10);
         }
 
-        // 전체 리렌더링 없이 데이터만 실시간 반영 및 저장 (커서 튕김 현상 원천 차단)
-        function updateMonthNotesDataOnly() {
+        function updateMonthNotesDataDirect() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
             const noteKey = `${year}-${String(month).padStart(2, '0')}`;
@@ -722,11 +719,11 @@
                     <div class="space-y-1 z-30">
                         <div class="flex gap-1">
                             <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-[11px] px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
-                            <button onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
+                            <button type="button" onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
                         </div>
                         <div class="flex items-center justify-between gap-1 pt-0.5">
-                            <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 휴가</button>
-                            <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 근무</button>
+                            <button type="button" onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 휴가</button>
+                            <button type="button" onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 근무</button>
                         </div>
                     </div>
                 </div>
@@ -754,7 +751,7 @@
                         <div id="monthly-notes-container" class="space-y-1.5"></div>
                         <div class="flex gap-1.5 pt-1">
                             <input type="text" id="monthly-note-input" onkeydown="handleMonthNoteKeyDown(event)" placeholder="중요 메모 입력 후 엔터 또는 + 버튼..." class="w-full text-xs px-3 py-2 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700 placeholder:text-stone-400">
-                            <button onclick="addMonthNoteItem()" class="bg-stone-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
+                            <button type="button" onclick="addMonthNoteItem()" class="bg-stone-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
                         </div>
                     </div>
 
@@ -808,11 +805,11 @@
                             <div class="space-y-1.5">
                                 <div class="flex gap-1">
                                     <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
-                                    <button onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
+                                    <button type="button" onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
-                                    <button onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 휴가</button>
-                                    <button onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 근무</button>
+                                    <button type="button" onclick="openChefModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 휴가</button>
+                                    <button type="button" onclick="openTagModal('${dateKey}')" class="text-[10px] px-2 py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all">+ 근무</button>
                                 </div>
                             </div>
                         </div>
@@ -876,8 +873,8 @@
                             <div class="flex flex-wrap gap-1.5" id="tags-box-${dateKey}"></div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="openChefModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 hover:bg-stone-200 transition-all">+ 휴가 추가</button>
-                            <button onclick="openTagModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 hover:bg-stone-200 transition-all">+ 근무 태그 추가</button>
+                            <button type="button" onclick="openChefModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 hover:bg-stone-200 transition-all">+ 휴가 추가</button>
+                            <button type="button" onclick="openTagModal('${dateKey}')" class="px-3.5 py-1.5 rounded-xl bg-stone-100 text-stone-700 font-bold text-xs border border-stone-200 hover:bg-stone-200 transition-all">+ 근무 태그 추가</button>
                         </div>
                     </div>
                     <div class="space-y-3 shrink-0">
@@ -885,7 +882,7 @@
                             <div class="space-y-2 mb-3 max-h-[160px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="flex gap-2">
                                 <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일을 입력하세요" class="w-full text-sm px-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
-                                <button onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">추가</button>
+                                <button type="button" onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">추가</button>
                             </div>
                         </div>
                     </div>
@@ -910,7 +907,7 @@
                         <div>
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-xs font-bold text-stone-600 uppercase tracking-wide">회의록 목록</h3>
-                                <button onclick="createMinute()" class="bg-stone-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-stone-700 transition-all">+ 회의 기록</button>
+                                <button type="button" onclick="createMinute()" class="bg-stone-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-stone-700 transition-all">+ 회의 기록</button>
                             </div>
                             <div class="space-y-2 overflow-y-auto max-h-[500px]">
                                 ${minutes.length === 0 ? '<p class="text-xs text-stone-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
@@ -936,7 +933,7 @@
                 <div class="space-y-4">
                     <div class="flex justify-between items-center border-b border-stone-200 pb-3">
                         <h3 class="font-bold text-stone-800 text-sm">회의록 상세 작성</h3>
-                        <button onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2.5 py-1 rounded font-semibold transition-all">삭제</button>
+                        <button type="button" onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2.5 py-1 rounded font-semibold transition-all">삭제</button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목" class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
@@ -993,7 +990,6 @@
             else currentDate.setDate(currentDate.getDate() + dir);
             renderView();
         }
-        function goToToday() { currentDate = new Date(); renderView(); }
         
         function handleKeyDown(e, dateKey) {
             if (e.key === 'Enter') {
@@ -1114,10 +1110,10 @@
                         <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
                         <div class="flex items-center gap-0.5 ml-1 shrink-0">
                             <div class="flex flex-col">
-                                <button onclick="moveTodoUp('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
-                                <button onclick="moveTodoDown('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
+                                <button type="button" onclick="moveTodoUp('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
+                                <button type="button" onclick="moveTodoDown('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
                             </div>
-                            <button onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
+                            <button type="button" onclick="deleteTodoItem('${dateKey}', ${item.id})" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
                         </div>
                     `;
                     box.appendChild(itemDiv);
@@ -1155,7 +1151,7 @@
                         else if (tag === '휴가') tagStyle = 'bg-rose-100 text-rose-800';
                         else if (tag.startsWith('휴가:')) tagStyle = 'bg-stone-100 text-stone-700';
 
-                        tagsBox.innerHTML += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${tagStyle} mr-1 mb-0.5">${tag} <button onclick="removeTag('${dateKey}', ${idx})" class="ml-1 opacity-60">×</button></span>`;
+                        tagsBox.innerHTML += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${tagStyle} mr-1 mb-0.5">${tag} <button type="button" onclick="removeTag('${dateKey}', ${idx})" class="ml-1 opacity-60">×</button></span>`;
                     });
                 }
             }
