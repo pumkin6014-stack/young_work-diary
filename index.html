@@ -344,8 +344,8 @@
             div.className = "flex items-center gap-1.5 group bg-stone-900/30 px-2 py-1 rounded-lg border border-stone-800";
             div.id = `summary-item-row-${monthNum}-${itemId}`;
             div.innerHTML = `
-                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
-                <input type="text" id="sum-text-${monthNum}-${itemId}" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryDataOnly(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
+                <input type="text" id="sum-text-input-${monthNum}-${itemId}" value="${textValue || ''}" oninput="updateSummaryDataOnly(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
                 <button type="button" onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
             `;
             container.appendChild(div);
@@ -396,7 +396,7 @@
             }
         }
 
-        function updateSummaryData(monthNum) {
+        function updateSummaryDataOnly(monthNum) {
             const year = currentDate.getFullYear();
             const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
             const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
@@ -411,7 +411,8 @@
                 const checkbox = row.querySelector('input[type="checkbox"]');
                 const textInput = row.querySelector('input[type="text"]');
                 if (textInput) {
-                    const existingId = row.id ? row.id.split('-').pop() : Date.now();
+                    const parts = textInput.id.split('-');
+                    const existingId = parts[parts.length - 1];
                     if (checkbox.checked) {
                         textInput.classList.add('line-through', 'opacity-50');
                     } else {
@@ -461,8 +462,8 @@
             div.className = "flex items-center gap-1.5 group bg-white px-2 py-1.5 rounded-lg border border-stone-200 shadow-2xs";
             div.id = `month-note-row-${itemId}`;
             div.innerHTML = `
-                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesDataDirect()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
-                <input type="text" id="mn-text-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesDataDirect()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesDataOnly()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
+                <input type="text" id="mn-text-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesDataOnly()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
                 <div class="flex items-center gap-0.5 ml-1 shrink-0">
                     <div class="flex flex-col">
                         <button type="button" onclick="moveMonthNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
@@ -577,7 +578,7 @@
             }, 10);
         }
 
-        function updateMonthNotesDataDirect() {
+        function updateMonthNotesDataOnly() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
             const noteKey = `${year}-${String(month).padStart(2, '0')}`;
@@ -593,7 +594,8 @@
                 const checkbox = row.querySelector('input[type="checkbox"]');
                 const textInput = row.querySelector('input[type="text"]');
                 if (textInput) {
-                    const existingId = row.id ? row.id.split('-').pop() : Date.now();
+                    const parts = textInput.id.split('-');
+                    const existingId = parts[parts.length - 1];
                     if (checkbox.checked) {
                         textInput.classList.add('line-through', 'opacity-50');
                     } else {
@@ -1076,6 +1078,19 @@
             }
         }
 
+        // 할 일 항목 수정 시 리렌더링 없이 즉시 데이터 동기화
+        function updateTodoItemText(dateKey, id) {
+            const textInput = document.getElementById(`todo-text-input-${dateKey}-${id}`);
+            if (!textInput) return;
+            
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.map(i => i.id === Number(id) ? {...i, text: textInput.value} : i);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
+            }
+        }
+
         function updateTodoBoxOnly(dateKey) {
             const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
             const box = document.getElementById(`todo-box-${dateKey}`);
@@ -1107,7 +1122,8 @@
                     });
 
                     itemDiv.innerHTML = `
-                        <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
+                        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleTodo('${dateKey}', ${item.id})" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0 mr-1.5">
+                        <input type="text" id="todo-text-input-${dateKey}-${item.id}" value="${item.text}" oninput="updateTodoItemText('${dateKey}', ${item.id})" class="w-full bg-transparent border-0 p-0 text-[11px] focus:outline-none ${item.done ? 'line-through opacity-40' : ''}">
                         <div class="flex items-center gap-0.5 ml-1 shrink-0">
                             <div class="flex flex-col">
                                 <button type="button" onclick="moveTodoUp('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
