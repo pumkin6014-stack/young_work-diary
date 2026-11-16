@@ -86,7 +86,7 @@
                     db.collection("users").doc(uid).set({ sdm_data: initialData, sdm_minutes: initialMinutes, sdm_summaries: initialSummaries }, { merge: true });
                 }
                 if (typeof renderView === 'function') renderView();
-                if (typeof renderAllMonthSummaries === 'function') renderAllMonthSummaries();
+                if (typeof initAllMonthSummaries === 'function') initAllMonthSummaries();
             });
         }
     </script>
@@ -189,8 +189,8 @@
                     <div id="date-navigator" class="flex items-center gap-2 bg-stone-50 px-3 py-1.5 rounded-xl border border-stone-200">
                         <span id="current-date-title" class="text-sm font-bold text-stone-700">2026년 11월</span>
                         <div class="flex gap-1">
-                            <button onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">‹</button>
-                            <button onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-stone-600 transition-all">›</button>
+                            <button onclick="changeDate(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-slate-100 text-xs font-bold text-stone-600 transition-all">‹</button>
+                            <button onclick="changeDate(1)" class="w-6 h-6 flex items-center justify-center rounded-lg border border-stone-200 bg-white hover:bg-slate-100 text-xs font-bold text-stone-600 transition-all">›</button>
                         </div>
                     </div>
                     <button onclick="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-white border border-stone-200 rounded-xl hover:bg-stone-50 shadow-2xs text-stone-700 transition-all">오늘</button>
@@ -270,6 +270,7 @@
 
         window.onload = () => {
             renderView();
+            initAllMonthSummaries();
             window.addEventListener('click', (e) => {
                 document.getElementById('date-context-menu').classList.add('hidden');
                 document.getElementById('todo-context-menu').classList.add('hidden');
@@ -279,8 +280,6 @@
         function toggleSummaryPanel() {
             isSummaryOpen = !isSummaryOpen;
             const panel = document.getElementById('summary-panel');
-            
-            renderAllMonthSummaries();
 
             if (isSummaryOpen) {
                 panel.style.width = '300px';
@@ -293,27 +292,35 @@
             }
         }
 
-        function renderAllMonthSummaries() {
+        // 최초 한 번만 HTML 구조를 만들고, 이후에는 글자 타이핑 시 절대 리렌더링되지 않도록 분리
+        function initAllMonthSummaries() {
             const container = document.getElementById('all-months-container');
-            if (!container) return;
-            container.innerHTML = '';
+            if (!container || container.children.length > 0) return;
 
             const year = currentDate.getFullYear();
-            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            
             document.getElementById('summary-panel-main-title').innerText = `${year}년 월별 핵심요약`;
 
             for (let m = 1; m <= 12; m++) {
-                const summaryKey = `${year}-${String(m).padStart(2, '0')}`;
-                const val = summaries[summaryKey] || '';
-
                 const div = document.createElement('div');
                 div.className = 'border-b border-stone-700/60 pb-2.5 space-y-1';
                 div.innerHTML = `
                     <div class="text-[11px] font-bold text-stone-300 tracking-wide">${m}월</div>
-                    <textarea id="summary-textarea-${m}" oninput="saveAllMonthSummary(${m}, this.value)" placeholder="${m}월 주요 일정..." class="w-full h-11 bg-transparent border-0 border-b border-transparent hover:border-stone-600 focus:border-stone-400 p-0 text-xs text-stone-100 focus:outline-none resize-none placeholder:text-stone-500">${val}</textarea>
+                    <textarea id="summary-textarea-${m}" oninput="saveAllMonthSummary(${m}, this.value)" placeholder="${m}월 주요 일정..." class="w-full h-11 bg-transparent border-0 border-b border-transparent hover:border-stone-600 focus:border-stone-400 p-0 text-xs text-stone-100 focus:outline-none resize-none placeholder:text-stone-500"></textarea>
                 `;
                 container.appendChild(div);
+            }
+            loadAllMonthValues();
+        }
+
+        function loadAllMonthValues() {
+            const year = currentDate.getFullYear();
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            for (let m = 1; m <= 12; m++) {
+                const summaryKey = `${year}-${String(m).padStart(2, '0')}`;
+                const textarea = document.getElementById(`summary-textarea-${m}`);
+                if (textarea && document.activeElement !== textarea) {
+                    textarea.value = summaries[summaryKey] || '';
+                }
             }
         }
 
@@ -356,7 +363,7 @@
             loadTodos();
             
             if (isSummaryOpen) {
-                renderAllMonthSummaries();
+                loadAllMonthValues();
             }
         }
 
@@ -545,7 +552,7 @@
                                 <button onclick="createMinute()" class="bg-stone-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-stone-700 transition-all">+ 회의 기록</button>
                             </div>
                             <div class="space-y-2 overflow-y-auto max-h-[500px]">
-                                ${minutes.length === 0 ? '<p class="text-xs text-stone-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
+                                ${minutes.length === 0 ? '<p class="text-xs text-slate-400 py-6 text-center">저장된 회의록이 없습니다.</p>' : ''}
                                 ${minutes.map(m => `
                                     <div onclick="selectMinute(${m.id})" class="p-3.5 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-stone-100 border-stone-300 shadow-2xs' : 'bg-white border-stone-200 hover:bg-stone-50'}">
                                         <div class="text-xs font-bold text-stone-800 truncate">${m.title || '제목 없음'}</div>
@@ -856,6 +863,7 @@
             activeDateMenuKey = dateKey;
             const m = document.getElementById('date-context-menu');
             m.style.top = `${e.clientY}px`; m.style.left = `${e.clientX}px`;
+            m.classList.add('hidden'); // hidden 유지용 버그 방지
             m.classList.remove('hidden');
         }
 
