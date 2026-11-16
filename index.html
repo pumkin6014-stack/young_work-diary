@@ -86,7 +86,7 @@
                     db.collection("users").doc(uid).set({ sdm_data: initialData, sdm_minutes: initialMinutes, sdm_summaries: initialSummaries }, { merge: true });
                 }
                 if (typeof renderView === 'function') renderView();
-                if (typeof renderAllMonthSummaries === 'function') renderAllMonthSummaries();
+                if (typeof loadAllMonthValues === 'function') loadAllMonthValues();
             });
         }
     </script>
@@ -153,7 +153,7 @@
                 SDM<br>PLANNER
             </div>
 
-            <!-- 박스 없이 심플하게 펼쳐지는 1~12월 요약 패널 -->
+            <!-- 월별 핵심요약 사이드 패널 (달 아래에 바로 입력 가능한 칸 제공) -->
             <div id="summary-panel" class="absolute left-full top-0 h-full w-0 bg-stone-800 text-stone-200 border-r border-stone-700 shadow-2xl overflow-hidden flex flex-col z-50 pointer-events-none opacity-0">
                 <div class="p-4 w-80 flex flex-col h-full justify-between">
                     <div class="space-y-3 flex-1 flex flex-col overflow-hidden">
@@ -162,8 +162,25 @@
                             <button onclick="toggleSummaryPanel()" class="text-stone-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded transition-all">✕</button>
                         </div>
                         
-                        <!-- 테두리 박스 없이 심플하게 나열되는 영역 -->
-                        <div id="all-months-container" class="flex-1 overflow-y-auto space-y-3 pr-1"></div>
+                        <!-- 1~12월 목록 영역 -->
+                        <div id="all-months-container" class="flex-1 overflow-y-auto space-y-4 pr-1">
+                            <script>
+                                for (let m = 1; m <= 12; m++) {
+                                    document.write(`
+                                        <div class="border-b border-stone-700/60 pb-3 space-y-2">
+                                            <div class="text-[11px] font-bold text-stone-300 tracking-wide">${m}월</div>
+                                            <!-- 기존에 등록된 할 일 목록이 표시되는 박스 -->
+                                            <div id="summary-items-${m}" class="space-y-1.5 pl-0.5"></div>
+                                            <!-- 각 달 아래에 바로 입력할 수 있는 입력창과 + 버튼 -->
+                                            <div class="flex gap-1 pt-1">
+                                                <input type="text" id="summary-input-${m}" onkeydown="handleSummaryKeyDown(event, ${m})" placeholder="주요 일정 입력..." class="w-full text-[11px] px-2.5 py-1 bg-stone-900/60 border border-stone-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-500 text-stone-100 placeholder:text-stone-500">
+                                                <button onclick="addSummaryItem(${m})" class="bg-stone-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 hover:bg-stone-500 transition-all">+</button>
+                                            </div>
+                                        </div>
+                                    `);
+                                }
+                            </script>
+                        </div>
                     </div>
                     <div class="text-[9px] text-stone-400 text-center pt-2.5 border-t border-stone-700 shrink-0">
                         입력 시 실시간 자동 저장됩니다.
@@ -176,7 +193,10 @@
         <div class="flex-1 flex flex-col overflow-hidden bg-stone-50/40 relative">
             <header class="bg-white border-b border-stone-200 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0 shadow-2xs">
                 <div class="flex items-center gap-3">
-                    <h1 id="view-title" class="text-lg font-bold text-stone-800 tracking-tight">월간 다이어리</h1>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 id="view-title" class="text-lg font-bold text-stone-800 tracking-tight">월간 다이어리</h1>
+                        <span id="work-summary-badge" class="text-xs font-semibold px-2.5 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg shadow-2xs hidden"></span>
+                    </div>
                     <div class="relative">
                         <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="전체 기간 내용 검색..." class="text-xs bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 pl-8 focus:outline-none focus:ring-1 focus:ring-stone-400 w-40 sm:w-56 text-stone-700">
                         <span class="absolute left-3 top-2.5 text-stone-400 text-xs">🔍</span>
@@ -270,6 +290,7 @@
 
         window.onload = () => {
             renderView();
+            loadAllMonthValues();
             window.addEventListener('click', (e) => {
                 document.getElementById('date-context-menu').classList.add('hidden');
                 document.getElementById('todo-context-menu').classList.add('hidden');
@@ -279,13 +300,12 @@
         function toggleSummaryPanel() {
             isSummaryOpen = !isSummaryOpen;
             const panel = document.getElementById('summary-panel');
-            
-            renderAllMonthSummaries();
 
             if (isSummaryOpen) {
                 panel.style.width = '300px';
                 panel.style.opacity = '1';
                 panel.classList.remove('pointer-events-none');
+                loadAllMonthValues();
             } else {
                 panel.style.width = '0px';
                 panel.style.opacity = '0';
@@ -293,35 +313,126 @@
             }
         }
 
-        function renderAllMonthSummaries() {
-            const container = document.getElementById('all-months-container');
-            if (!container) return;
-            container.innerHTML = '';
-
+        function loadAllMonthValues() {
             const year = currentDate.getFullYear();
             const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            
             document.getElementById('summary-panel-main-title').innerText = `${year}년 월별 핵심요약`;
-
+            
             for (let m = 1; m <= 12; m++) {
                 const summaryKey = `${year}-${String(m).padStart(2, '0')}`;
-                const val = summaries[summaryKey] || '';
+                const container = document.getElementById(`summary-items-${m}`);
+                if (!container) continue;
 
-                const div = document.createElement('div');
-                div.className = 'border-b border-stone-700/60 pb-2.5 space-y-1';
-                div.innerHTML = `
-                    <div class="text-[11px] font-bold text-stone-300 tracking-wide">${m}월</div>
-                    <textarea id="summary-textarea-${m}" oninput="saveAllMonthSummary(${m}, this.value)" placeholder="${m}월 주요 일정..." class="w-full h-11 bg-transparent border-0 border-b border-transparent hover:border-stone-600 focus:border-stone-400 p-0 text-xs text-stone-100 focus:outline-none resize-none placeholder:text-stone-500">${val}</textarea>
-                `;
-                container.appendChild(div);
+                let items = summaries[summaryKey];
+                // 기존 데이터(문자열 등) 호환성 처리
+                if (!Array.isArray(items)) {
+                    if (items && typeof items === 'object' && items.text) {
+                        items = [{ id: Date.now(), text: items.text, done: items.done || false }];
+                    } else if (typeof items === 'string' && items.trim() !== '') {
+                        items = [{ id: Date.now(), text: items, done: false }];
+                    } else {
+                        items = [];
+                    }
+                }
+
+                container.innerHTML = '';
+                if (items.length > 0) {
+                    items.forEach((item) => {
+                        renderSummaryItemHTML(m, item.id, item.text, item.done);
+                    });
+                }
             }
         }
 
-        function saveAllMonthSummary(monthNum, textValue) {
+        function renderSummaryItemHTML(monthNum, itemId, textValue, isDone) {
+            const container = document.getElementById(`summary-items-${monthNum}`);
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-1.5 group bg-stone-900/30 px-2 py-1 rounded-lg border border-stone-800";
+            div.id = `summary-item-row-${monthNum}-${itemId}`;
+            div.innerHTML = `
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
+                <input type="text" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <button onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function handleSummaryKeyDown(e, monthNum) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSummaryItem(monthNum);
+            }
+        }
+
+        function addSummaryItem(monthNum) {
+            const inputField = document.getElementById(`summary-input-${monthNum}`);
+            if (!inputField) return;
+            const text = inputField.value.trim();
+            if (!text) return;
+
             const year = currentDate.getFullYear();
             const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
             const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            summaries[summaryKey] = textValue;
+            
+            let items = summaries[summaryKey];
+            if (!Array.isArray(items)) items = [];
+
+            items.push({ id: Date.now(), text: text, done: false });
+            summaries[summaryKey] = items;
+
+            localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
+            saveDataToStorage();
+
+            inputField.value = '';
+            loadAllMonthValues();
+        }
+
+        function removeSummaryItem(monthNum, itemId) {
+            const year = currentDate.getFullYear();
+            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            
+            let items = summaries[summaryKey];
+            if (Array.isArray(items)) {
+                summaries[summaryKey] = items.filter(i => i.id !== itemId);
+                localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
+                saveDataToStorage();
+                loadAllMonthValues();
+            }
+        }
+
+        function updateSummaryData(monthNum) {
+            const year = currentDate.getFullYear();
+            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            
+            const container = document.getElementById(`summary-items-${monthNum}`);
+            if (!container) return;
+            
+            const rows = container.querySelectorAll('.group');
+            let newItems = [];
+
+            rows.forEach(row => {
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                const textInput = row.querySelector('input[type="text"]');
+                if (textInput) {
+                    const existingId = row.id ? row.id.split('-').pop() : Date.now();
+                    if (checkbox.checked) {
+                        textInput.classList.add('line-through', 'opacity-50');
+                    } else {
+                        textInput.classList.remove('line-through', 'opacity-50');
+                    }
+                    newItems.push({
+                        id: Number(existingId) || Date.now(),
+                        text: textInput.value,
+                        done: checkbox.checked
+                    });
+                }
+            });
+
+            summaries[summaryKey] = newItems;
             localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
             saveDataToStorage();
         }
@@ -353,20 +464,78 @@
             else if (currentView === 'weekly') renderWeekly();
             else if (currentView === 'daily') renderDaily();
             else if (currentView === 'minutes') renderMinutes();
-            loadTodos();
             
-            if (isSummaryOpen) {
-                renderAllMonthSummaries();
+            loadTodos();
+            loadAllMonthValues();
+            updateWorkSummaryBadge();
+        }
+
+        function updateWorkSummaryBadge() {
+            const badge = document.getElementById('work-summary-badge');
+            if (!badge) return;
+
+            if (currentView !== 'monthly' && currentView !== 'weekly' && currentView !== 'daily') {
+                badge.classList.add('hidden');
+                return;
+            }
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+
+            let totalOvertime = 0;
+            let dutyDays = [];
+            let fdDays = [];
+
+            for (let d = 1; d <= 31; d++) {
+                const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                if (data[dateKey] && data[dateKey].tags) {
+                    data[dateKey].tags.forEach(tag => {
+                        if (tag === '시간외1') totalOvertime += 1;
+                        else if (tag === '시간외1.5') totalOvertime += 1.5;
+                        else if (tag === '시간외2') totalOvertime += 2;
+                        else if (tag === '당직') dutyDays.push(d);
+                        else if (tag === 'FD') fdDays.push(d);
+                    });
+                }
+            }
+
+            let summaryTextParts = [];
+            if (totalOvertime > 0) summaryTextParts.push(`시간외 총 ${totalOvertime}시간`);
+            if (dutyDays.length > 0) summaryTextParts.push(`당직: ${dutyDays.join(', ')}일`);
+            if (fdDays.length > 0) summaryTextParts.push(`FD: ${fdDays.join(', ')}일`);
+
+            if (summaryTextParts.length > 0) {
+                badge.innerText = summaryTextParts.join(' | ');
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
             }
         }
 
         function createMonthlyCellHTML(year, month, day, dateKey, isCurrentMonth = true) {
-            const opacityClass = isCurrentMonth ? 'bg-white' : 'bg-white/60 opacity-60';
+            const today = new Date();
+            const isToday = isCurrentMonth && 
+                            year === today.getFullYear() && 
+                            month === today.getMonth() && 
+                            day === today.getDate();
+
+            let cellStyle = isCurrentMonth ? 'bg-white' : 'bg-white/60 opacity-60';
+            let borderStyle = 'border border-stone-200';
+            
+            if (isToday) {
+                cellStyle = 'bg-stone-50/90 shadow-xs ring-1 ring-stone-400';
+                borderStyle = 'border-2 border-stone-500';
+            }
+
             return `
-                <div class="${opacityClass} min-h-[180px] p-2.5 flex flex-col justify-between relative border border-stone-200" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
+                <div class="${cellStyle} min-h-[180px] p-2.5 flex flex-col justify-between relative ${borderStyle}" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
                     <div>
                         <div class="flex items-center justify-between mb-1">
-                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold text-stone-700 cursor-pointer hover:text-stone-900 shrink-0">${day}</span>
+                            <div class="flex items-center gap-1.5">
+                                <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold ${isToday ? 'bg-stone-700 text-white px-1.5 py-0.5 rounded-md shadow-2xs' : 'text-stone-700 hover:text-stone-900'} cursor-pointer shrink-0">${day}</span>
+                                ${isToday ? '<span class="text-[9px] font-extrabold px-1.5 py-0.2 bg-stone-200 text-stone-700 rounded tracking-wider">TODAY</span>' : ''}
+                            </div>
                             <div class="flex flex-wrap gap-1 items-center justify-end overflow-hidden max-h-[45px]" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
@@ -642,7 +811,7 @@
             localStorage.setItem('sdm_data', JSON.stringify(data));
             saveDataToStorage();
             closeTagModal();
-            loadTodos();
+            renderView();
         }
 
         function openChefModal(dateKey) { activeDateKey = dateKey; document.getElementById('chef-vacation-modal').classList.remove('hidden'); }
@@ -655,7 +824,7 @@
                 data[dateKey].tags.splice(index, 1);
                 localStorage.setItem('sdm_data', JSON.stringify(data));
                 saveDataToStorage();
-                loadTodos();
+                renderView();
             }
         }
 
