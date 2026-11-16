@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SDM · 업무 다이어리</title>
-    <!-- 브라우저 탭 아이콘 설정 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- 파이어베이스 안정적인 CDN 라이브러리 로드 -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -111,10 +109,16 @@
         }
         .todo-item { cursor: grab; }
         .todo-item:active { cursor: grabbing; }
-        .todo-item.dragging { opacity: 0.4; }
 
         #summary-panel {
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-minute-area, #printable-minute-area * { visibility: visible; }
+            #printable-minute-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -144,7 +148,6 @@
                     </button>
                 </div>
 
-                <!-- 월별 핵심요약 버튼 -->
                 <div class="w-full px-2 mt-4">
                     <button type="button" onclick="toggleSummaryPanel()" class="w-full py-2.5 rounded-xl bg-stone-600 hover:bg-stone-500 text-stone-200 text-[10px] font-bold flex flex-col items-center justify-center transition-all border border-stone-500 shadow-xs" title="1~12월 전체 요약">
                         <span class="text-xs">📌</span>
@@ -166,7 +169,6 @@
                             <button type="button" onclick="toggleSummaryPanel()" class="text-stone-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded transition-all">✕</button>
                         </div>
                         
-                        <!-- 1~12월 목록 영역 -->
                         <div id="all-months-container" class="flex-1 overflow-y-auto space-y-4 pr-1">
                             <script>
                                 for (let m = 1; m <= 12; m++) {
@@ -183,9 +185,6 @@
                                 }
                             </script>
                         </div>
-                    </div>
-                    <div class="text-[9px] text-stone-400 text-center pt-2.5 border-t border-stone-700 shrink-0">
-                        입력 시 실시간 자동 저장됩니다.
                     </div>
                 </div>
             </div>
@@ -344,11 +343,62 @@
             div.className = "flex items-center gap-1.5 group bg-stone-900/30 px-2 py-1 rounded-lg border border-stone-800";
             div.id = `summary-item-row-${monthNum}-${itemId}`;
             div.innerHTML = `
-                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
-                <input type="text" id="sum-text-${monthNum}-${itemId}" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
-                <button type="button" onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleSummaryCheckbox(${monthNum}, ${itemId})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
+                <input type="text" id="sum-text-${monthNum}-${itemId}" value="${textValue || ''}" disabled class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <button type="button" id="sum-btn-${monthNum}-${itemId}" onclick="toggleEditSummary(${monthNum}, ${itemId})" class="text-[10px] text-stone-300 bg-stone-700 hover:bg-stone-600 px-1.5 py-0.5 rounded shrink-0 font-medium">수정</button>
+                <button type="button" onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1">✕</button>
             `;
             container.appendChild(div);
+        }
+
+        function toggleEditSummary(monthNum, itemId) {
+            const input = document.getElementById(`sum-text-${monthNum}-${itemId}`);
+            const btn = document.getElementById(`sum-btn-${monthNum}-${itemId}`);
+            if (!input || !btn) return;
+
+            if (input.disabled) {
+                input.disabled = false;
+                input.focus();
+                btn.innerText = '저장';
+                btn.className = 'text-[10px] text-white bg-amber-600 hover:bg-amber-500 px-1.5 py-0.5 rounded shrink-0 font-medium';
+            } else {
+                input.disabled = true;
+                btn.innerText = '수정';
+                btn.className = 'text-[10px] text-stone-300 bg-stone-700 hover:bg-stone-600 px-1.5 py-0.5 rounded shrink-0 font-medium';
+                saveSummaryTexts(monthNum);
+            }
+        }
+
+        function toggleSummaryCheckbox(monthNum, itemId) {
+            saveSummaryTexts(monthNum);
+            loadAllMonthValues();
+        }
+
+        function saveSummaryTexts(monthNum) {
+            const year = currentDate.getFullYear();
+            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            const container = document.getElementById(`summary-items-${monthNum}`);
+            if (!container) return;
+
+            const rows = container.querySelectorAll('.group');
+            let newItems = [];
+            rows.forEach(row => {
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                const textInput = row.querySelector('input[type="text"]');
+                if (textInput) {
+                    const parts = textInput.id.split('-');
+                    const existingId = parts[parts.length - 1];
+                    newItems.push({
+                        id: Number(existingId),
+                        text: textInput.value,
+                        done: checkbox.checked
+                    });
+                }
+            });
+            summaries[summaryKey] = newItems;
+            localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
+            saveDataToStorage();
         }
 
         function handleSummaryKeyDown(e, monthNum) {
@@ -379,7 +429,6 @@
 
             inputField.value = '';
             loadAllMonthValues();
-            setTimeout(() => inputField.focus(), 50);
         }
 
         function removeSummaryItem(monthNum, itemId) {
@@ -396,40 +445,6 @@
             }
         }
 
-        function updateSummaryData(monthNum) {
-            const year = currentDate.getFullYear();
-            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
-            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            
-            const container = document.getElementById(`summary-items-${monthNum}`);
-            if (!container) return;
-            
-            const rows = container.querySelectorAll('.group');
-            let newItems = [];
-
-            rows.forEach(row => {
-                const checkbox = row.querySelector('input[type="checkbox"]');
-                const textInput = row.querySelector('input[type="text"]');
-                if (textInput) {
-                    const existingId = row.id ? row.id.split('-').pop() : Date.now();
-                    if (checkbox.checked) {
-                        textInput.classList.add('line-through', 'opacity-50');
-                    } else {
-                        textInput.classList.remove('line-through', 'opacity-50');
-                    }
-                    newItems.push({
-                        id: Number(existingId) || Date.now(),
-                        text: textInput.value,
-                        done: checkbox.checked
-                    });
-                }
-            });
-
-            summaries[summaryKey] = newItems;
-            localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
-            saveDataToStorage();
-        }
-
         function loadMonthNotes() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
@@ -440,7 +455,6 @@
 
             let items = monthNotes[noteKey];
             if (!Array.isArray(items)) items = [];
-            else items = items.filter(i => i && typeof i === 'object' && i.text !== undefined);
 
             container.innerHTML = '';
             if (items.length === 0) {
@@ -455,14 +469,14 @@
         function renderMonthNoteItemHTML(noteKey, itemId, textValue, isDone, index, totalLength) {
             const container = document.getElementById('monthly-notes-container');
             if (!container) return;
-            if (container.querySelector('.italic')) container.innerHTML = '';
 
             const div = document.createElement('div');
             div.className = "flex items-center gap-1.5 group bg-white px-2 py-1.5 rounded-lg border border-stone-200 shadow-2xs";
             div.id = `month-note-row-${itemId}`;
             div.innerHTML = `
-                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesDataDirect()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
-                <input type="text" id="mn-text-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesDataDirect()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleMonthNoteCheckbox('${noteKey}')" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
+                <input type="text" id="mn-text-${itemId}" value="${textValue || ''}" disabled class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
+                <button type="button" id="mn-btn-${itemId}" onclick="toggleEditMonthNote('${itemId}')" class="text-[10px] text-stone-600 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-1.5 py-0.5 rounded shrink-0 font-medium">수정</button>
                 <div class="flex items-center gap-0.5 ml-1 shrink-0">
                     <div class="flex flex-col">
                         <button type="button" onclick="moveMonthNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
@@ -472,6 +486,57 @@
                 </div>
             `;
             container.appendChild(div);
+        }
+
+        function toggleEditMonthNote(itemId) {
+            const input = document.getElementById(`mn-text-${itemId}`);
+            const btn = document.getElementById(`mn-btn-${itemId}`);
+            if (!input || !btn) return;
+
+            if (input.disabled) {
+                input.disabled = false;
+                input.focus();
+                btn.innerText = '저장';
+                btn.className = 'text-[10px] text-white bg-stone-700 hover:bg-stone-800 px-1.5 py-0.5 rounded shrink-0 font-medium';
+            } else {
+                input.disabled = true;
+                btn.innerText = '수정';
+                btn.className = 'text-[10px] text-stone-600 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-1.5 py-0.5 rounded shrink-0 font-medium';
+                saveMonthNotesStorage();
+            }
+        }
+
+        function toggleMonthNoteCheckbox(noteKey) {
+            saveMonthNotesStorage();
+            loadMonthNotes();
+        }
+
+        function saveMonthNotesStorage() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const noteKey = `${year}-${String(month).padStart(2, '0')}`;
+            const monthNotes = JSON.parse(localStorage.getItem('sdm_month_notes') || '{}');
+            const container = document.getElementById('monthly-notes-container');
+            if (!container) return;
+
+            const rows = container.querySelectorAll('.group');
+            let newItems = [];
+            rows.forEach(row => {
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                const textInput = row.querySelector('input[type="text"]');
+                if (textInput) {
+                    const parts = textInput.id.split('-');
+                    const existingId = parts[parts.length - 1];
+                    newItems.push({
+                        id: Number(existingId),
+                        text: textInput.value,
+                        done: checkbox.checked
+                    });
+                }
+            });
+            monthNotes[noteKey] = newItems;
+            localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
+            saveDataToStorage();
         }
 
         function handleMonthNoteKeyDown(e) {
@@ -503,11 +568,6 @@
 
             inputField.value = '';
             loadMonthNotes();
-            
-            setTimeout(() => {
-                const targetInput = document.getElementById('monthly-note-input');
-                if (targetInput) targetInput.focus();
-            }, 10);
         }
 
         function removeMonthNoteItem(itemId) {
@@ -544,11 +604,6 @@
             localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
             saveDataToStorage();
             loadMonthNotes();
-            
-            setTimeout(() => {
-                const el = document.getElementById(`mn-text-${itemId}`);
-                if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
-            }, 10);
         }
 
         function moveMonthNoteDown(itemId) {
@@ -570,46 +625,6 @@
             localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
             saveDataToStorage();
             loadMonthNotes();
-            
-            setTimeout(() => {
-                const el = document.getElementById(`mn-text-${itemId}`);
-                if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
-            }, 10);
-        }
-
-        function updateMonthNotesDataDirect() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth() + 1;
-            const noteKey = `${year}-${String(month).padStart(2, '0')}`;
-            const monthNotes = JSON.parse(localStorage.getItem('sdm_month_notes') || '{}');
-            
-            const container = document.getElementById('monthly-notes-container');
-            if (!container) return;
-            
-            const rows = container.querySelectorAll('.group');
-            let newItems = [];
-
-            rows.forEach(row => {
-                const checkbox = row.querySelector('input[type="checkbox"]');
-                const textInput = row.querySelector('input[type="text"]');
-                if (textInput) {
-                    const existingId = row.id ? row.id.split('-').pop() : Date.now();
-                    if (checkbox.checked) {
-                        textInput.classList.add('line-through', 'opacity-50');
-                    } else {
-                        textInput.classList.remove('line-through', 'opacity-50');
-                    }
-                    newItems.push({
-                        id: Number(existingId) || Date.now(),
-                        text: textInput.value,
-                        done: checkbox.checked
-                    });
-                }
-            });
-
-            monthNotes[noteKey] = newItems;
-            localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
-            saveDataToStorage();
         }
 
         function switchView(view) {
@@ -743,7 +758,6 @@
             
             let html = `
                 <div class="w-full bg-white border-0 flex flex-col">
-                    <!-- 월간 다이어리 최상단 중요 메모 영역 -->
                     <div class="p-4 bg-stone-50/90 border-b border-stone-200 shrink-0 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-stone-700 tracking-wide">📌 ${month + 1}월 핵심 메모 & 중요 일정</span>
@@ -813,8 +827,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex-1 notebook-zone p-0">
-                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" class="w-full h-full min-h-[120px] text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
+                        <div class="flex-1 notebook-zone p-0 flex flex-col relative">
+                            <div class="flex justify-end pb-1 pr-1">
+                                <button type="button" id="memo-btn-${dateKey}" onclick="toggleEditMemo('${dateKey}')" class="text-[10px] px-2 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded font-semibold hover:bg-stone-200 transition-all">수정</button>
+                            </div>
+                            <textarea id="memo-${dateKey}" disabled class="w-full flex-1 min-h-[90px] text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
                         </div>
                     </div>
                     <div class="text-right pt-2.5 border-t border-stone-200 shrink-0">
@@ -887,13 +904,34 @@
                         </div>
                     </div>
                     <div class="flex-1 flex flex-col space-y-2 pt-2">
-                        <div class="text-xs font-bold text-stone-500 shrink-0">일일 메모</div>
+                        <div class="flex justify-between items-center shrink-0">
+                            <div class="text-xs font-bold text-stone-500">일일 메모</div>
+                            <button type="button" id="memo-btn-${dateKey}" onclick="toggleEditMemo('${dateKey}')" class="text-xs px-3 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg font-bold hover:bg-stone-200 transition-all">수정</button>
+                        </div>
                         <div class="flex-1 notebook-zone p-0">
-                            <textarea id="memo-${dateKey}" oninput="saveMemo('${dateKey}')" class="w-full h-full min-h-[180px] text-sm p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
+                            <textarea id="memo-${dateKey}" disabled class="w-full h-full min-h-[180px] text-sm p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
                         </div>
                     </div>
                 </div>
             `;
+        }
+
+        function toggleEditMemo(dateKey) {
+            const memoField = document.getElementById(`memo-${dateKey}`);
+            const btn = document.getElementById(`memo-btn-${dateKey}`);
+            if (!memoField || !btn) return;
+
+            if (memoField.disabled) {
+                memoField.disabled = false;
+                memoField.focus();
+                btn.innerText = '저장';
+                btn.className = 'text-xs px-3 py-1 bg-stone-700 text-white border border-stone-700 rounded-lg font-bold hover:bg-stone-800 transition-all';
+            } else {
+                memoField.disabled = true;
+                btn.innerText = '수정';
+                btn.className = 'text-xs px-3 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg font-bold hover:bg-stone-200 transition-all';
+                saveMemo(dateKey);
+            }
         }
 
         function renderMinutes() {
@@ -914,7 +952,7 @@
                                 ${minutes.map(m => `
                                     <div onclick="selectMinute(${m.id})" class="p-3.5 rounded-xl border cursor-pointer transition-all ${activeMinuteId === m.id ? 'bg-stone-100 border-stone-300 shadow-2xs' : 'bg-white border-stone-200 hover:bg-stone-50'}">
                                         <div class="text-xs font-bold text-stone-800 truncate">${m.title || '제목 없음'}</div>
-                                        <div class="text-[10px] text-stone-400 mt-1">${m.date || ''} · 참석자: ${m.attendees || '미지정'}</div>
+                                        <div class="text-[10px] text-stone-400 mt-1">${m.type || '기타'} · ${m.date || ''}</div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -927,36 +965,71 @@
             `;
         }
 
+        let isMinuteEditing = false;
         function renderMinuteEditor(minute) {
             if (!minute) return `<div class="flex items-center justify-center h-full text-stone-400 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
+            const currentType = minute.type || '기타';
             return `
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center border-b border-stone-200 pb-3">
-                        <h3 class="font-bold text-stone-800 text-sm">회의록 상세 작성</h3>
+                <div class="space-y-4" id="printable-minute-area">
+                    <div class="flex justify-between items-center border-b border-stone-200 pb-3 no-print">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-stone-800 text-sm">회의록 상세 작성</h3>
+                            <button type="button" onclick="toggleEditMinute()" id="minute-edit-btn" class="text-xs px-3 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg font-bold hover:bg-stone-200 transition-all">${isMinuteEditing ? '저장' : '수정'}</button>
+                            <button type="button" onclick="window.print()" class="text-xs px-3 py-1 bg-stone-800 text-white rounded-lg font-bold hover:bg-stone-700 transition-all flex items-center gap-1"><span>🖨️</span> 출력</button>
+                        </div>
                         <button type="button" onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2.5 py-1 rounded font-semibold transition-all">삭제</button>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input type="text" id="m-title" value="${minute.title || ''}" oninput="updateMinute(${minute.id})" placeholder="회의 제목" class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
-                        <input type="date" id="m-date" value="${minute.date || ''}" oninput="updateMinute(${minute.id})" class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+
+                    <!-- 3가지 회의록 버전 버튼 -->
+                    <div class="flex gap-2 flex-wrap items-center">
+                        <span class="text-xs font-bold text-stone-500 mr-1">회의 유형:</span>
+                        <button type="button" onclick="setMinuteType(${minute.id}, '경로식당 주간회의')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '경로식당 주간회의' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">1. 경로식당 주간회의</button>
+                        <button type="button" onclick="setMinuteType(${minute.id}, '환경변화TF팀')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '환경변화TF팀' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">2. 환경변화TF팀</button>
+                        <button type="button" onclick="setMinuteType(${minute.id}, '기타')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '기타' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">3. 기타</button>
                     </div>
-                    <input type="text" id="m-attendees" value="${minute.attendees || ''}" oninput="updateMinute(${minute.id})" placeholder="참석자 이름" class="w-full text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
-                    <textarea id="m-content" oninput="updateMinute(${minute.id})" placeholder="회의 내용..." class="w-full h-32 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.content || ''}</textarea>
-                    <textarea id="m-actions" oninput="updateMinute(${minute.id})" placeholder="실행 과제..." class="w-full h-24 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.actions || ''}</textarea>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="text" id="m-title" value="${minute.title || ''}" ${!isMinuteEditing ? 'disabled' : ''} placeholder="회의 제목" class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                        <input type="date" id="m-date" value="${minute.date || ''}" ${!isMinuteEditing ? 'disabled' : ''} class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                    </div>
+                    <input type="text" id="m-attendees" value="${minute.attendees || ''}" ${!isMinuteEditing ? 'disabled' : ''} placeholder="참석자 이름" class="w-full text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                    <textarea id="m-content" ${!isMinuteEditing ? 'disabled' : ''} placeholder="회의 내용..." class="w-full h-32 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.content || ''}</textarea>
+                    <textarea id="m-actions" ${!isMinuteEditing ? 'disabled' : ''} placeholder="실행 과제..." class="w-full h-24 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.actions || ''}</textarea>
                 </div>
             `;
         }
 
-        function createMinute() {
+        function setMinuteType(id, typeName) {
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
-            const newM = { id: Date.now(), title: '새로운 회의록', date: new Date().toISOString().split('T')[0], attendees: '', content: '', actions: '' };
-            minutes.unshift(newM);
+            const target = minutes.find(m => m.id === id);
+            if (!target) return;
+            target.type = typeName;
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
-            activeMinuteId = newM.id;
             saveDataToStorage();
             renderMinutes();
         }
 
-        function selectMinute(id) { activeMinuteId = id; renderMinutes(); }
+        function toggleEditMinute() {
+            isMinuteEditing = !isMinuteEditing;
+            if (!isMinuteEditing) {
+                updateMinute(activeMinuteId);
+            }
+            renderMinutes();
+        }
+
+        function createMinute() {
+            const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
+            const newM = { id: Date.now(), title: '새로운 회의록', type: '기타', date: new Date().toISOString().split('T')[0], attendees: '', content: '', actions: '' };
+            minutes.unshift(newM);
+            localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
+            activeMinuteId = newM.id;
+            isMinuteEditing = true;
+            saveDataToStorage();
+            renderMinutes();
+        }
+
+        function selectMinute(id) { activeMinuteId = id; isMinuteEditing = false; renderMinutes(); }
+        
         function updateMinute(id) {
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             const target = minutes.find(m => m.id === id);
@@ -974,12 +1047,14 @@
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             saveDataToStorage();
         }
+
         function deleteMinute(id) {
             if(!confirm('삭제하시겠습니까?')) return;
             let minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             minutes = minutes.filter(m => m.id !== id);
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             activeMinuteId = minutes.length > 0 ? minutes[0].id : null;
+            isMinuteEditing = false;
             saveDataToStorage();
             renderMinutes();
         }
@@ -1043,11 +1118,6 @@
             
             inputField.value = '';
             updateTodoBoxOnly(dateKey);
-            
-            setTimeout(() => {
-                const targetInput = document.getElementById(`input-${dateKey}`);
-                if (targetInput) targetInput.focus();
-            }, 10);
         }
 
         function moveTodoUp(dateKey, index) {
@@ -1073,6 +1143,36 @@
                 localStorage.setItem('sdm_data', JSON.stringify(data));
                 saveDataToStorage();
                 updateTodoBoxOnly(dateKey);
+            }
+        }
+
+        function toggleEditTodo(dateKey, id) {
+            const input = document.getElementById(`todo-text-${dateKey}-${id}`);
+            const btn = document.getElementById(`todo-edit-btn-${dateKey}-${id}`);
+            if (!input || !btn) return;
+
+            if (input.disabled) {
+                input.disabled = false;
+                input.focus();
+                btn.innerText = '저장';
+                btn.className = 'text-[10px] text-white bg-stone-700 hover:bg-stone-800 px-1 py-0.5 rounded font-medium shrink-0';
+            } else {
+                input.disabled = true;
+                btn.innerText = '수정';
+                btn.className = 'text-[10px] text-stone-600 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-1 py-0.5 rounded font-medium shrink-0';
+                saveTodoItemTextDirect(dateKey, id);
+            }
+        }
+
+        function saveTodoItemTextDirect(dateKey, id) {
+            const textInput = document.getElementById(`todo-text-${dateKey}-${id}`);
+            if (!textInput) return;
+            
+            const data = JSON.parse(localStorage.getItem('sdm_data') || '{}');
+            if (data[dateKey] && data[dateKey].todos) {
+                data[dateKey].todos = data[dateKey].todos.map(i => i.id === Number(id) ? {...i, text: textInput.value} : i);
+                localStorage.setItem('sdm_data', JSON.stringify(data));
+                saveDataToStorage();
             }
         }
 
@@ -1107,8 +1207,10 @@
                     });
 
                     itemDiv.innerHTML = `
-                        <span class="truncate flex-1 cursor-pointer ${item.done ? 'line-through opacity-40' : ''}" onclick="toggleTodo('${dateKey}', ${item.id})">${item.text}</span>
-                        <div class="flex items-center gap-0.5 ml-1 shrink-0">
+                        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleTodo('${dateKey}', ${item.id})" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0 mr-1.5">
+                        <input type="text" id="todo-text-${dateKey}-${item.id}" value="${item.text}" disabled class="w-full bg-transparent border-0 p-0 text-[11px] focus:outline-none ${item.done ? 'line-through opacity-40' : ''}">
+                        <div class="flex items-center gap-1 ml-1 shrink-0">
+                            <button type="button" id="todo-edit-btn-${dateKey}-${item.id}" onclick="toggleEditTodo('${dateKey}', ${item.id})" class="text-[10px] text-stone-600 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-1 py-0.5 rounded font-medium shrink-0">수정</button>
                             <div class="flex flex-col">
                                 <button type="button" onclick="moveTodoUp('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
                                 <button type="button" onclick="moveTodoDown('${dateKey}', ${index})" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
@@ -1137,7 +1239,7 @@
                 updateTodoBoxOnly(dateKey);
                 
                 const memoField = document.getElementById(`memo-${dateKey}`);
-                if (memoField && document.activeElement !== memoField) memoField.value = data[dateKey].memo || '';
+                if (memoField && memoField.disabled) memoField.value = data[dateKey].memo || '';
                 
                 const tagsBox = document.getElementById(`tags-box-${dateKey}`);
                 if (tagsBox) {
