@@ -969,6 +969,8 @@
         function renderMinuteEditor(minute) {
             if (!minute) return `<div class="flex items-center justify-center h-full text-stone-400 text-xs">좌측에서 회의록을 선택하거나 새로 만들어주세요.</div>`;
             const currentType = minute.type || '기타';
+            const isPresetLocked = (currentType === '경로식당 주간회의' || currentType === '환경변화 TF팀');
+
             return `
                 <div class="space-y-4" id="printable-minute-area">
                     <div class="flex justify-between items-center border-b border-stone-200 pb-3 no-print">
@@ -980,19 +982,20 @@
                         <button type="button" onclick="deleteMinute(${minute.id})" class="text-xs text-rose-500 hover:bg-rose-50 px-2.5 py-1 rounded font-semibold transition-all">삭제</button>
                     </div>
 
-                    <!-- 3가지 회의록 버전 버튼 -->
+                    <!-- 3가지 회의록 버전 버튼 (숫자 제거) -->
                     <div class="flex gap-2 flex-wrap items-center">
                         <span class="text-xs font-bold text-stone-500 mr-1">회의 유형:</span>
-                        <button type="button" onclick="setMinuteType(${minute.id}, '경로식당 주간회의')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '경로식당 주간회의' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">1. 경로식당 주간회의</button>
-                        <button type="button" onclick="setMinuteType(${minute.id}, '환경변화TF팀')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '환경변화TF팀' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">2. 환경변화TF팀</button>
-                        <button type="button" onclick="setMinuteType(${minute.id}, '기타')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '기타' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">3. 기타</button>
+                        <button type="button" onclick="setMinuteType(${minute.id}, '경로식당 주간회의')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '경로식당 주간회의' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">경로식당 주간회의</button>
+                        <button type="button" onclick="setMinuteType(${minute.id}, '환경변화 TF팀')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '환경변화 TF팀' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">환경변화 TF팀</button>
+                        <button type="button" onclick="setMinuteType(${minute.id}, '기타')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${currentType === '기타' ? 'bg-stone-700 text-white border-stone-700 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'}">기타</button>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input type="text" id="m-title" value="${minute.title || ''}" ${!isMinuteEditing ? 'disabled' : ''} placeholder="회의 제목" class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
                         <input type="date" id="m-date" value="${minute.date || ''}" ${!isMinuteEditing ? 'disabled' : ''} class="text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
                     </div>
-                    <input type="text" id="m-attendees" value="${minute.attendees || ''}" ${!isMinuteEditing ? 'disabled' : ''} placeholder="참석자 이름" class="w-full text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                    <!-- 참석자 입력: 경로식당/환경변화TF팀은 고정 및 비활성화, 기타는 자유 입력 -->
+                    <input type="text" id="m-attendees" value="${minute.attendees || ''}" ${(!isMinuteEditing || isPresetLocked) ? 'disabled' : ''} placeholder="참석자 이름" class="w-full text-xs px-3.5 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700 ${isPresetLocked ? 'bg-stone-100 text-stone-500' : ''}">
                     <textarea id="m-content" ${!isMinuteEditing ? 'disabled' : ''} placeholder="회의 내용..." class="w-full h-32 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.content || ''}</textarea>
                     <textarea id="m-actions" ${!isMinuteEditing ? 'disabled' : ''} placeholder="실행 과제..." class="w-full h-24 text-xs p-3.5 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">${minute.actions || ''}</textarea>
                 </div>
@@ -1003,7 +1006,16 @@
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             const target = minutes.find(m => m.id === id);
             if (!target) return;
+            
             target.type = typeName;
+
+            // 회의 유형에 따라 참석자 자동 고정
+            if (typeName === '경로식당 주간회의') {
+                target.attendees = '서현영, 김대성, 최정란, 황부용';
+            } else if (typeName === '환경변화 TF팀') {
+                target.attendees = '총무팀: 최신애, 공재호, 서현영, 김민경 / 복지2팀: 권지현, 조윤정';
+            }
+
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             saveDataToStorage();
             renderMinutes();
@@ -1041,7 +1053,7 @@
             const actEl = document.getElementById('m-actions');
             if(tEl) target.title = tEl.value;
             if(dEl) target.date = dEl.value;
-            if(aEl) target.attendees = aEl.value;
+            if(aEl && target.type === '기타') target.attendees = aEl.value; // 기타일 때만 자유 수정 반영
             if(cEl) target.content = cEl.value;
             if(actEl) target.actions = actEl.value;
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
