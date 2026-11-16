@@ -243,7 +243,7 @@
         </div>
     </div>
 
-    <!-- 휴가자 선택 모달팝업 -->
+    <!-- 휴자 선택 모달팝업 -->
     <div id="chef-vacation-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -326,15 +326,7 @@
                 if (!container) continue;
 
                 let items = summaries[summaryKey];
-                if (!Array.isArray(items)) {
-                    if (items && typeof items === 'object' && items.text) {
-                        items = [{ id: Date.now(), text: items.text, done: items.done || false }];
-                    } else if (typeof items === 'string' && items.trim() !== '') {
-                        items = [{ id: Date.now(), text: items, done: false }];
-                    } else {
-                        items = [];
-                    }
-                }
+                if (!Array.isArray(items)) items = [];
 
                 container.innerHTML = '';
                 if (items.length > 0) {
@@ -345,135 +337,6 @@
             }
         }
 
-        function renderSummaryItemHTML(monthNum, itemId, textValue, isDone) {
-            const container = document.getElementById(`summary-items-${monthNum}`);
-            if (!container) return;
-
-            const div = document.createElement('div');
-            div.className = "flex items-center gap-1.5 group bg-stone-900/30 px-2 py-1 rounded-lg border border-stone-800";
-            div.id = `summary-item-row-${monthNum}-${itemId}`;
-            div.innerHTML = `
-                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
-                <input type="text" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
-                <button onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-            `;
-            container.appendChild(div);
-        }
-
-        function handleSummaryKeyDown(e, monthNum) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addSummaryItem(monthNum);
-            }
-        }
-
-        function addSummaryItem(monthNum) {
-            const inputField = document.getElementById(`summary-input-${monthNum}`);
-            if (!inputField) return;
-            const text = inputField.value.trim();
-            if (!text) return;
-
-            const year = currentDate.getFullYear();
-            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
-            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            
-            let items = summaries[summaryKey];
-            if (!Array.isArray(items)) items = [];
-
-            items.push({ id: Date.now(), text: text, done: false });
-            summaries[summaryKey] = items;
-
-            localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
-            saveDataToStorage();
-
-            inputField.value = '';
-            loadAllMonthValues();
-            setTimeout(() => inputField.focus(), 100);
-        }
-
-        function removeSummaryItem(monthNum, itemId) {
-            const year = currentDate.getFullYear();
-            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
-            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            
-            let items = summaries[summaryKey];
-            if (Array.isArray(items)) {
-                summaries[summaryKey] = items.filter(i => i.id !== itemId);
-                localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
-                saveDataToStorage();
-                loadAllMonthValues();
-            }
-        }
-
-        function updateSummaryData(monthNum) {
-            const year = currentDate.getFullYear();
-            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
-            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            
-            const container = document.getElementById(`summary-items-${monthNum}`);
-            if (!container) return;
-            
-            const rows = container.querySelectorAll('.group');
-            let newItems = [];
-
-            rows.forEach(row => {
-                const checkbox = row.querySelector('input[type="checkbox"]');
-                const textInput = row.querySelector('input[type="text"]');
-                if (textInput) {
-                    const existingId = row.id ? row.id.split('-').pop() : Date.now();
-                    if (checkbox.checked) {
-                        textInput.classList.add('line-through', 'opacity-50');
-                    } else {
-                        textInput.classList.remove('line-through', 'opacity-50');
-                    }
-                    newItems.push({
-                        id: Number(existingId) || Date.now(),
-                        text: textInput.value,
-                        done: checkbox.checked
-                    });
-                }
-            });
-
-            summaries[summaryKey] = newItems;
-            localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
-            saveDataToStorage();
-        }
-
-        function switchView(view) {
-            currentView = view;
-            if (view === 'daily') currentDate = new Date();
-
-            ['monthly', 'weekly', 'daily', 'minutes'].forEach(v => {
-                const btn = document.getElementById(`tab-${v}`);
-                if(btn) {
-                    btn.className = (v === view) 
-                        ? "w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-stone-500 text-white shadow-xs transition-all"
-                        : "w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all";
-                }
-            });
-            const titles = { monthly: '월간 다이어리', weekly: '주간 다이어리', daily: '일간 다이어리', minutes: '회의록' };
-            document.getElementById('view-title').innerText = titles[view];
-            document.title = titles[view] + ' · SDM';
-            
-            const nav = document.getElementById('date-navigator');
-            nav.style.display = (view === 'minutes') ? 'none' : 'flex';
-
-            renderView();
-        }
-
-        function renderView() {
-            if (currentView === 'monthly') renderMonthly();
-            else if (currentView === 'weekly') renderWeekly();
-            else if (currentView === 'daily') renderDaily();
-            else if (currentView === 'minutes') renderMinutes();
-            
-            loadTodos();
-            loadAllMonthValues();
-            loadMonthNotes();
-            updateWorkSummaryBadge();
-        }
-
-        // 월간 최상단 다중 메모 관련 로직
         function loadMonthNotes() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
@@ -483,23 +346,20 @@
             if (!container) return;
 
             let items = monthNotes[noteKey];
-            if (!Array.isArray(items)) {
-                items = [];
-            } else {
-                items = items.filter(i => i && typeof i === 'object' && i.text !== undefined);
-            }
+            if (!Array.isArray(items)) items = [];
+            else items = items.filter(i => i && typeof i === 'object' && i.text !== undefined);
 
             container.innerHTML = '';
             if (items.length === 0) {
                 container.innerHTML = `<div class="text-[11px] text-stone-400 italic pl-1">등록된 핵심 메모가 없습니다. 아래에서 추가해주세요.</div>`;
             } else {
-                items.forEach((item) => {
-                    renderMonthNoteItemHTML(noteKey, item.id, item.text, item.done);
+                items.forEach((item, index) => {
+                    renderMonthNoteItemHTML(noteKey, item.id, item.text, item.done, index, items.length);
                 });
             }
         }
 
-        function renderMonthNoteItemHTML(noteKey, itemId, textValue, isDone) {
+        function renderMonthNoteItemHTML(noteKey, itemId, textValue, isDone, index, totalLength) {
             const container = document.getElementById('monthly-notes-container');
             if (!container) return;
             if (container.querySelector('.italic')) container.innerHTML = '';
@@ -510,7 +370,13 @@
             div.innerHTML = `
                 <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesData()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
                 <input type="text" value="${textValue || ''}" oninput="updateMonthNotesData()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
-                <button onclick="removeMonthNoteItem('${itemId}')" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 opacity-0 group-hover:opacity-100 transition-opacity font-bold">✕</button>
+                <div class="flex items-center gap-0.5 ml-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="flex flex-col">
+                        <button onclick="moveMonthNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
+                        <button onclick="moveMonthNoteDown('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
+                    </div>
+                    <button onclick="removeMonthNoteItem('${itemId}')" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
+                </div>
             `;
             container.appendChild(div);
         }
@@ -545,11 +411,10 @@
             inputField.value = '';
             loadMonthNotes();
             
-            // 엔터 직후 커서가 입력창에 확실히 고정되도록 강제 포커스
             setTimeout(() => {
                 const targetInput = document.getElementById('monthly-note-input');
                 if (targetInput) targetInput.focus();
-            }, 100);
+            }, 10);
         }
 
         function removeMonthNoteItem(itemId) {
@@ -565,6 +430,48 @@
                 saveDataToStorage();
                 loadMonthNotes();
             }
+        }
+
+        function moveMonthNoteUp(itemId) {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const noteKey = `${year}-${String(month).padStart(2, '0')}`;
+            const monthNotes = JSON.parse(localStorage.getItem('sdm_month_notes') || '{}');
+            let items = monthNotes[noteKey];
+            if (!Array.isArray(items)) return;
+
+            const idx = items.findIndex(i => String(i.id) === String(itemId));
+            if (idx <= 0) return;
+
+            const temp = items[idx];
+            items[idx] = items[idx - 1];
+            items[idx - 1] = temp;
+
+            monthNotes[noteKey] = items;
+            localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
+            saveDataToStorage();
+            loadMonthNotes();
+        }
+
+        function moveMonthNoteDown(itemId) {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const noteKey = `${year}-${String(month).padStart(2, '0')}`;
+            const monthNotes = JSON.parse(localStorage.getItem('sdm_month_notes') || '{}');
+            let items = monthNotes[noteKey];
+            if (!Array.isArray(items)) return;
+
+            const idx = items.findIndex(i => String(i.id) === String(itemId));
+            if (idx === -1 || idx >= items.length - 1) return;
+
+            const temp = items[idx];
+            items[idx] = items[idx + 1];
+            items[idx + 1] = temp;
+
+            monthNotes[noteKey] = items;
+            localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
+            saveDataToStorage();
+            loadMonthNotes();
         }
 
         function updateMonthNotesData() {
@@ -600,6 +507,40 @@
             monthNotes[noteKey] = newItems;
             localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
             saveDataToStorage();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            if (view === 'daily') currentDate = new Date();
+
+            ['monthly', 'weekly', 'daily', 'minutes'].forEach(v => {
+                const btn = document.getElementById(`tab-${v}`);
+                if(btn) {
+                    btn.className = (v === view) 
+                        ? "w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-stone-500 text-white shadow-xs transition-all"
+                        : "w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all";
+                }
+            });
+            const titles = { monthly: '월간 다이어리', weekly: '주간 다이어리', daily: '일간 다이어리', minutes: '회의록' };
+            document.getElementById('view-title').innerText = titles[view];
+            document.title = titles[view] + ' · SDM';
+            
+            const nav = document.getElementById('date-navigator');
+            nav.style.display = (view === 'minutes') ? 'none' : 'flex';
+
+            renderView();
+        }
+
+        function renderView() {
+            if (currentView === 'monthly') renderMonthly();
+            else if (currentView === 'weekly') renderWeekly();
+            else if (currentView === 'daily') renderDaily();
+            else if (currentView === 'minutes') renderMinutes();
+            
+            loadTodos();
+            loadAllMonthValues();
+            loadMonthNotes();
+            updateWorkSummaryBadge();
         }
 
         function updateWorkSummaryBadge() {
