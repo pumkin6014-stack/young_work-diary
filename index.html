@@ -243,7 +243,7 @@
         </div>
     </div>
 
-    <!-- 휴자 선택 모달팝업 -->
+    <!-- 휴가자 선택 모달팝업 -->
     <div id="chef-vacation-modal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -318,7 +318,8 @@
         function loadAllMonthValues() {
             const year = currentDate.getFullYear();
             const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            document.getElementById('summary-panel-main-title').innerText = `${year}년 월별 핵심요약`;
+            const summaryTitle = document.getElementById('summary-panel-main-title');
+            if (summaryTitle) summaryTitle.innerText = `${year}년 월별 핵심요약`;
             
             for (let m = 1; m <= 12; m++) {
                 const summaryKey = `${year}-${String(m).padStart(2, '0')}`;
@@ -335,6 +336,100 @@
                     });
                 }
             }
+        }
+
+        function renderSummaryItemHTML(monthNum, itemId, textValue, isDone) {
+            const container = document.getElementById(`summary-items-${monthNum}`);
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-1.5 group bg-stone-900/30 px-2 py-1 rounded-lg border border-stone-800";
+            div.id = `summary-item-row-${monthNum}-${itemId}`;
+            div.innerHTML = `
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
+                <input type="text" id="summary-text-input-${monthNum}-${itemId}" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <button onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function handleSummaryKeyDown(e, monthNum) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSummaryItem(monthNum);
+            }
+        }
+
+        function addSummaryItem(monthNum) {
+            const inputField = document.getElementById(`summary-input-${monthNum}`);
+            if (!inputField) return;
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            const year = currentDate.getFullYear();
+            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            
+            let items = summaries[summaryKey];
+            if (!Array.isArray(items)) items = [];
+
+            items.push({ id: Date.now(), text: text, done: false });
+            summaries[summaryKey] = items;
+
+            localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
+            saveDataToStorage();
+
+            inputField.value = '';
+            loadAllMonthValues();
+            setTimeout(() => inputField.focus(), 50);
+        }
+
+        function removeSummaryItem(monthNum, itemId) {
+            const year = currentDate.getFullYear();
+            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            
+            let items = summaries[summaryKey];
+            if (Array.isArray(items)) {
+                summaries[summaryKey] = items.filter(i => i.id !== itemId);
+                localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
+                saveDataToStorage();
+                loadAllMonthValues();
+            }
+        }
+
+        function updateSummaryData(monthNum) {
+            const year = currentDate.getFullYear();
+            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            
+            const container = document.getElementById(`summary-items-${monthNum}`);
+            if (!container) return;
+            
+            const rows = container.querySelectorAll('.group');
+            let newItems = [];
+
+            rows.forEach(row => {
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                const textInput = row.querySelector('input[type="text"]');
+                if (textInput) {
+                    const existingId = row.id ? row.id.split('-').pop() : Date.now();
+                    if (checkbox.checked) {
+                        textInput.classList.add('line-through', 'opacity-50');
+                    } else {
+                        textInput.classList.remove('line-through', 'opacity-50');
+                    }
+                    newItems.push({
+                        id: Number(existingId) || Date.now(),
+                        text: textInput.value,
+                        done: checkbox.checked
+                    });
+                }
+            });
+
+            summaries[summaryKey] = newItems;
+            localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
+            saveDataToStorage();
         }
 
         function loadMonthNotes() {
@@ -369,8 +464,8 @@
             div.id = `month-note-row-${itemId}`;
             div.innerHTML = `
                 <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateMonthNotesData()" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
-                <input type="text" value="${textValue || ''}" oninput="updateMonthNotesData()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
-                <div class="flex items-center gap-0.5 ml-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <input type="text" id="month-note-text-input-${itemId}" value="${textValue || ''}" oninput="updateMonthNotesData()" placeholder="중요 내용 입력..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
+                <div class="flex items-center gap-0.5 ml-1 shrink-0">
                     <div class="flex flex-col">
                         <button onclick="moveMonthNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
                         <button onclick="moveMonthNoteDown('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
@@ -450,7 +545,13 @@
             monthNotes[noteKey] = items;
             localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
             saveDataToStorage();
+            
+            // 포커스 유지 처리
             loadMonthNotes();
+            setTimeout(() => {
+                const el = document.getElementById(`month-note-text-input-${itemId}`);
+                if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+            }, 10);
         }
 
         function moveMonthNoteDown(itemId) {
@@ -471,7 +572,12 @@
             monthNotes[noteKey] = items;
             localStorage.setItem('sdm_month_notes', JSON.stringify(monthNotes));
             saveDataToStorage();
+            
             loadMonthNotes();
+            setTimeout(() => {
+                const el = document.getElementById(`month-note-text-input-${itemId}`);
+                if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+            }, 10);
         }
 
         function updateMonthNotesData() {
@@ -630,7 +736,8 @@
         function renderMonthly() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            document.getElementById('current-date-title').innerText = `${year}년 ${month + 1}월`;
+            const titleEl = document.getElementById('current-date-title');
+            if (titleEl) titleEl.innerText = `${year}년 ${month + 1}월`;
 
             const firstDayObj = new Date(year, month, 1);
             let firstDayIndex = (firstDayObj.getDay() + 6) % 7;
@@ -676,7 +783,8 @@
             }
 
             html += `</div></div>`;
-            document.getElementById('view-container').innerHTML = html;
+            const container = document.getElementById('view-container');
+            if(container) container.innerHTML = html;
             loadMonthNotes();
         }
 
@@ -727,7 +835,8 @@
             const lastday = new Date(firstday);
             lastday.setDate(firstday.getDate() + 6);
             
-            document.getElementById('current-date-title').innerText = `${firstday.getMonth()+1}월 ${firstday.getDate()}일 ~ ${lastday.getMonth()+1}월 ${lastday.getDate()}일`;
+            const titleEl = document.getElementById('current-date-title');
+            if (titleEl) titleEl.innerText = `${firstday.getMonth()+1}월 ${firstday.getDate()}일 ~ ${lastday.getMonth()+1}월 ${lastday.getDate()}일`;
 
             const daysName = ['월요일', '화요일', '수요일', '목요일', '금요일', '<span class="text-stone-500">토요일</span>', '<span class="text-rose-500">일요일</span>'];
             let topRowHTML = '', bottomRowHTML = '';
@@ -741,7 +850,8 @@
                 else bottomRowHTML += cell;
             }
 
-            document.getElementById('view-container').innerHTML = `
+            const container = document.getElementById('view-container');
+            if(container) container.innerHTML = `
                 <div class="w-full bg-white border-t border-l border-stone-200">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${topRowHTML}</div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${bottomRowHTML}<div class="min-h-[480px] border-r border-b border-stone-200 bg-white/50"></div></div>
@@ -754,9 +864,11 @@
             const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const dayName = ['일', '월', '화', '수', '목', '금', '토'][currentDate.getDay()];
 
-            document.getElementById('current-date-title').innerText = `${year}년 ${month}월 ${day}일 (${dayName})`;
+            const titleEl = document.getElementById('current-date-title');
+            if (titleEl) titleEl.innerText = `${year}년 ${month}월 ${day}일 (${dayName})`;
 
-            document.getElementById('view-container').innerHTML = `
+            const container = document.getElementById('view-container');
+            if(container) container.innerHTML = `
                 <div class="w-full p-8 space-y-6 bg-white min-h-[600px] flex flex-col" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
                     <div class="border-b border-stone-200 pb-4 flex justify-between items-center shrink-0">
                         <div class="flex items-center gap-4">
@@ -791,7 +903,8 @@
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             if (minutes.length > 0 && !activeMinuteId) activeMinuteId = minutes[0].id;
 
-            document.getElementById('view-container').innerHTML = `
+            const container = document.getElementById('view-container');
+            if(container) container.innerHTML = `
                 <div class="w-full bg-white grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
                     <div class="md:col-span-4 border-r border-stone-200 p-5 bg-stone-50/50 flex flex-col justify-between">
                         <div>
@@ -851,11 +964,16 @@
             const minutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             const target = minutes.find(m => m.id === id);
             if (!target) return;
-            target.title = document.getElementById('m-title').value;
-            target.date = document.getElementById('m-date').value;
-            target.attendees = document.getElementById('m-attendees').value;
-            target.content = document.getElementById('m-content').value;
-            target.actions = document.getElementById('m-actions').value;
+            const tEl = document.getElementById('m-title');
+            const dEl = document.getElementById('m-date');
+            const aEl = document.getElementById('m-attendees');
+            const cEl = document.getElementById('m-content');
+            const actEl = document.getElementById('m-actions');
+            if(tEl) target.title = tEl.value;
+            if(dEl) target.date = dEl.value;
+            if(aEl) target.attendees = aEl.value;
+            if(cEl) target.content = cEl.value;
+            if(actEl) target.actions = actEl.value;
             localStorage.setItem('sdm_minutes', JSON.stringify(minutes));
             saveDataToStorage();
         }
