@@ -354,7 +354,7 @@
             div.id = `summary-item-row-${monthNum}-${itemId}`;
             div.innerHTML = `
                 <input type="checkbox" ${isDone ? 'checked' : ''} onchange="updateSummaryData(${monthNum})" class="w-3.5 h-3.5 accent-stone-500 rounded cursor-pointer shrink-0">
-                <input type="text" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
+                <input type="text" id="summary-text-${itemId}" value="${textValue || ''}" oninput="updateSummaryData(${monthNum})" placeholder="주요 일정..." class="w-full bg-transparent border-0 p-0 text-xs text-stone-100 focus:outline-none placeholder:text-stone-500 ${isDone ? 'line-through opacity-50' : ''}">
                 <button onclick="removeSummaryItem(${monthNum}, ${itemId})" class="text-[10px] text-stone-500 hover:text-rose-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
             `;
             container.appendChild(div);
@@ -380,7 +380,8 @@
             let items = summaries[summaryKey];
             if (!Array.isArray(items)) items = [];
 
-            items.push({ id: Date.now(), text: text, done: false });
+            const newId = Date.now();
+            items.push({ id: newId, text: text, done: false });
             summaries[summaryKey] = items;
 
             localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
@@ -388,6 +389,7 @@
 
             inputField.value = '';
             loadAllMonthValues();
+            setTimeout(() => inputField.focus(), 50);
         }
 
         function removeSummaryItem(monthNum, itemId) {
@@ -694,7 +696,7 @@
             
             let html = `
                 <div class="w-full bg-white border-0 flex flex-col">
-                    <!-- 월간 다이어리 최상단 중요 메모 영역 (체크박스 다중 추가 가능) -->
+                    <!-- 월간 다이어리 최상단 중요 메모 영역 -->
                     <div class="p-4 bg-stone-50/90 border-b border-stone-200 shrink-0 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-stone-700 tracking-wide">📌 ${month + 1}월 핵심 메모 & 중요 일정</span>
