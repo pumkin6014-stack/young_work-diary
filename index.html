@@ -86,7 +86,7 @@
                     db.collection("users").doc(uid).set({ sdm_data: initialData, sdm_minutes: initialMinutes, sdm_summaries: initialSummaries }, { merge: true });
                 }
                 if (typeof renderView === 'function') renderView();
-                if (typeof updateSidebarSummary === 'function') updateSidebarSummary();
+                if (typeof renderAllMonthSummaries === 'function') renderAllMonthSummaries();
             });
         }
     </script>
@@ -142,7 +142,7 @@
 
                 <!-- 월별 핵심요약 버튼 -->
                 <div class="w-full px-2 mt-4">
-                    <button onclick="toggleSummaryPanel()" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold flex flex-col items-center justify-center transition-all border border-slate-700 shadow-2xs" title="연도별 월별 요약">
+                    <button onclick="toggleSummaryPanel()" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold flex flex-col items-center justify-center transition-all border border-slate-700 shadow-2xs" title="1~12월 전체 요약">
                         <span>📌</span>
                         <span class="text-[8px] mt-0.5 text-indigo-400">월별요약</span>
                     </button>
@@ -153,29 +153,20 @@
                 SDM<br>PLANNER
             </div>
 
-            <!-- 클릭시 오른쪽으로 확장되는 1~12월 구분 요약 패널 -->
+            <!-- 클릭시 오른쪽으로 확장되는 1~12월 전체 펼쳐짐 패널 -->
             <div id="summary-panel" class="absolute left-full top-0 h-full w-0 bg-slate-900 border-r border-slate-800 shadow-2xl overflow-hidden flex flex-col z-50 pointer-events-none opacity-0">
                 <div class="p-4 w-80 flex flex-col h-full justify-between">
                     <div class="space-y-3 flex-1 flex flex-col overflow-hidden">
                         <div class="flex justify-between items-center border-b border-slate-800 pb-2 shrink-0">
-                            <h3 id="summary-panel-main-title" class="text-xs font-bold text-indigo-400">2026년 월별 핵심요약</h3>
+                            <h3 id="summary-panel-main-title" class="text-xs font-bold text-indigo-400">2026년 월별 핵심요약 (1~12월)</h3>
                             <button onclick="toggleSummaryPanel()" class="text-slate-400 hover:text-white text-xs font-bold px-1.5 py-0.5 rounded">✕</button>
                         </div>
                         
-                        <!-- 1~12월 탭 선택 버튼 영역 -->
-                        <div id="month-tabs-container" class="grid grid-cols-6 gap-1 shrink-0"></div>
-
-                        <!-- 선택된 월의 내용 입력 텍스트박스 -->
-                        <div class="flex-1 flex flex-col space-y-1.5 pt-1 overflow-hidden">
-                            <div class="text-[11px] font-bold text-slate-300 flex justify-between items-center">
-                                <span id="active-month-label">11월 주요 일정</span>
-                                <span class="text-[9px] text-slate-500 font-normal">자동 저장됨</span>
-                            </div>
-                            <textarea id="month-summary-input" oninput="saveMonthSummary()" placeholder="해당 월의 주요 일정을 입력하세요..." class="w-full flex-1 bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
-                        </div>
+                        <!-- 1~12월 칸이 세로로 쭉 나열되는 영역 -->
+                        <div id="all-months-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
                     </div>
                     <div class="text-[9px] text-slate-500 text-center pt-2 border-t border-slate-800 shrink-0">
-                        SDM WORK PLANNER
+                        입력 시 자동 저장됩니다.
                     </div>
                 </div>
             </div>
@@ -276,7 +267,6 @@
         let activeTodoTextForCopy = '';
         
         let isSummaryOpen = false;
-        let selectedSummaryMonth = new Date().getMonth() + 1; // 기본 현재 월
 
         window.onload = () => {
             renderView();
@@ -290,10 +280,7 @@
             isSummaryOpen = !isSummaryOpen;
             const panel = document.getElementById('summary-panel');
             
-            // 현재 보고 있는 달로 기본 선택 맞추기
-            selectedSummaryMonth = currentDate.getMonth() + 1;
-            renderMonthTabs();
-            updateSidebarSummary();
+            renderAllMonthSummaries();
 
             if (isSummaryOpen) {
                 panel.style.width = '320px';
@@ -306,53 +293,35 @@
             }
         }
 
-        function renderMonthTabs() {
-            const container = document.getElementById('month-tabs-container');
+        function renderAllMonthSummaries() {
+            const container = document.getElementById('all-months-container');
             if (!container) return;
             container.innerHTML = '';
 
+            const year = currentDate.getFullYear();
+            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
+            
+            document.getElementById('summary-panel-main-title').innerText = `${year}년 월별 핵심요약 (1~12월)`;
+
             for (let m = 1; m <= 12; m++) {
-                const isSelected = selectedSummaryMonth === m;
-                const btn = document.createElement('button');
-                btn.className = `py-1.5 rounded text-[10px] font-bold border transition-all ${
-                    isSelected 
-                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-2xs' 
-                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-                }`;
-                btn.innerText = `${m}월`;
-                btn.onclick = () => {
-                    selectedSummaryMonth = m;
-                    renderMonthTabs();
-                    updateSidebarSummary();
-                };
-                container.appendChild(btn);
+                const summaryKey = `${year}-${String(m).padStart(2, '0')}`;
+                const val = summaries[summaryKey] || '';
+
+                const div = document.createElement('div');
+                div.className = 'bg-slate-800/80 border border-slate-700 rounded-lg p-2 space-y-1';
+                div.innerHTML = `
+                    <div class="text-[11px] font-bold text-indigo-400">${m}월</div>
+                    <textarea oninput="saveAllMonthSummary(${m}, this.value)" placeholder="${m}월 주요 일정 입력..." class="w-full h-12 bg-slate-900 border border-slate-700 rounded p-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none">${val}</textarea>
+                `;
+                container.appendChild(div);
             }
         }
 
-        function updateSidebarSummary() {
+        function saveAllMonthSummary(monthNum, textValue) {
             const year = currentDate.getFullYear();
-            const summaryKey = `${year}-${String(selectedSummaryMonth).padStart(2, '0')}`;
+            const summaryKey = `${year}-${String(monthNum).padStart(2, '0')}`;
             const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            
-            const textarea = document.getElementById('month-summary-input');
-            if (textarea && document.activeElement !== textarea) {
-                textarea.value = summaries[summaryKey] || '';
-            }
-            
-            const labelEl = document.getElementById('active-month-label');
-            if (labelEl) {
-                labelEl.innerText = `${year}년 ${selectedSummaryMonth}월 주요 일정`;
-            }
-        }
-
-        function saveMonthSummary() {
-            const year = currentDate.getFullYear();
-            const summaryKey = `${year}-${String(selectedSummaryMonth).padStart(2, '0')}`;
-            const textarea = document.getElementById('month-summary-input');
-            if (!textarea) return;
-
-            const summaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
-            summaries[summaryKey] = textarea.value;
+            summaries[summaryKey] = textValue;
             localStorage.setItem('sdm_summaries', JSON.stringify(summaries));
             saveDataToStorage();
         }
@@ -386,11 +355,8 @@
             else if (currentView === 'minutes') renderMinutes();
             loadTodos();
             
-            // 상단 날짜가 바뀔 때 패널이 열려있다면 해당 월로 맞추기
             if (isSummaryOpen) {
-                selectedSummaryMonth = currentDate.getMonth() + 1;
-                renderMonthTabs();
-                updateSidebarSummary();
+                renderAllMonthSummaries();
             }
         }
 
