@@ -60,6 +60,7 @@
             const sdmMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
             const sdmSummaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
             const sdmMonthNotes = JSON.parse(localStorage.getItem('sdm_month_notes') || '{}');
+            const sdmWeekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
             const user = auth.currentUser;
             if (user) {
                 db.collection("users").doc(user.uid).set({
@@ -67,6 +68,7 @@
                     sdm_minutes: sdmMinutes,
                     sdm_summaries: sdmSummaries,
                     sdm_month_notes: sdmMonthNotes,
+                    sdm_week_notes: sdmWeekNotes,
                     updatedAt: new Date().toISOString()
                 }, { merge: true }).catch(err => console.error("동기화 실패:", err));
             }
@@ -80,12 +82,14 @@
                     if (data.sdm_minutes) localStorage.setItem('sdm_minutes', JSON.stringify(data.sdm_minutes));
                     if (data.sdm_summaries) localStorage.setItem('sdm_summaries', JSON.stringify(data.sdm_summaries));
                     if (data.sdm_month_notes) localStorage.setItem('sdm_month_notes', JSON.stringify(data.sdm_month_notes));
+                    if (data.sdm_week_notes) localStorage.setItem('sdm_week_notes', JSON.stringify(data.sdm_week_notes));
                 } else {
                     const initialData = JSON.parse(localStorage.getItem('sdm_data') || '{}');
                     const initialMinutes = JSON.parse(localStorage.getItem('sdm_minutes') || '[]');
                     const initialSummaries = JSON.parse(localStorage.getItem('sdm_summaries') || '{}');
                     const initialMonthNotes = JSON.parse(localStorage.getItem('sdm_month_notes') || '{}');
-                    db.collection("users").doc(uid).set({ sdm_data: initialData, sdm_minutes: initialMinutes, sdm_summaries: initialSummaries, sdm_month_notes: initialMonthNotes }, { merge: true });
+                    const initialWeekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
+                    db.collection("users").doc(uid).set({ sdm_data: initialData, sdm_minutes: initialMinutes, sdm_summaries: initialSummaries, sdm_month_notes: initialMonthNotes, sdm_week_notes: initialWeekNotes }, { merge: true });
                 }
                 if (typeof renderView === 'function') renderView();
                 if (typeof loadAllMonthValues === 'function') loadAllMonthValues();
@@ -130,11 +134,11 @@
             <div class="flex flex-col items-center space-y-6 w-full">
                 <div class="text-[10px] font-black tracking-widest text-stone-400 opacity-0">SDM</div>
                 <div class="space-y-3 w-full px-2">
-                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-stone-500 text-white shadow-xs transition-all">
+                    <button onclick="switchView('monthly')" id="tab-monthly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all">
                         <span class="text-xs font-bold">M</span>
                         <span class="text-[9px] mt-0.5">월간</span>
                     </button>
-                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center text-stone-300 hover:bg-stone-600 transition-all">
+                    <button onclick="switchView('weekly')" id="tab-weekly" class="w-full py-2.5 rounded-xl flex flex-col items-center justify-center bg-stone-500 text-white shadow-xs transition-all">
                         <span class="text-xs font-bold">W</span>
                         <span class="text-[9px] mt-0.5">주간</span>
                     </button>
@@ -195,7 +199,7 @@
             <header class="bg-white border-b border-stone-200 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0 shadow-2xs">
                 <div class="flex items-center gap-3">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <h1 id="view-title" class="text-lg font-bold text-stone-800 tracking-tight">월간 다이어리</h1>
+                        <h1 id="view-title" class="text-lg font-bold text-stone-800 tracking-tight">주간 다이어리</h1>
                         <span id="work-summary-badge" class="text-xs font-semibold px-2.5 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg shadow-2xs hidden"></span>
                     </div>
                     <div class="relative">
@@ -302,7 +306,7 @@
     </div>
 
     <script>
-        let currentView = 'monthly';
+        let currentView = 'weekly';
         let currentDate = new Date();
         let activeDateKey = null;
         let activeMinuteId = null;
@@ -508,6 +512,187 @@
             }
         }
 
+        function getWeekKey(d) {
+            const temp = new Date(d);
+            const distanceToMon = (temp.getDay() === 0 ? -6 : 1 - temp.getDay());
+            const firstday = new Date(temp);
+            firstday.setDate(temp.getDate() + distanceToMon);
+            return `${firstday.getFullYear()}-${String(firstday.getMonth() + 1).padStart(2, '0')}-${String(firstday.getDate()).padStart(2, '0')}`;
+        }
+
+        function loadWeekNotes() {
+            const weekKey = getWeekKey(currentDate);
+            const weekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
+            const container = document.getElementById('weekly-notes-container');
+            if (!container) return;
+
+            let items = weekNotes[weekKey];
+            if (!Array.isArray(items)) items = [];
+
+            container.innerHTML = '';
+            if (items.length === 0) {
+                container.innerHTML = `<div class="text-[11px] text-stone-400 italic pl-1">등록된 주간 메모가 없습니다. 아래에서 추가해주세요.</div>`;
+            } else {
+                items.forEach((item, index) => {
+                    renderWeekNoteItemHTML(weekKey, item.id, item.text, item.done, index, items.length);
+                });
+            }
+        }
+
+        function renderWeekNoteItemHTML(weekKey, itemId, textValue, isDone, index, totalLength) {
+            const container = document.getElementById('weekly-notes-container');
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-1.5 group bg-white px-2 py-1.5 rounded-lg border border-stone-200 shadow-2xs";
+            div.id = `week-note-row-${itemId}`;
+            div.innerHTML = `
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleWeekNoteCheckbox('${weekKey}')" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0">
+                <input type="text" id="wn-text-${itemId}" value="${textValue || ''}" disabled class="w-full bg-transparent border-0 p-0 text-xs text-stone-700 focus:outline-none placeholder:text-stone-400 ${isDone ? 'line-through opacity-50' : ''}">
+                <button type="button" id="wn-btn-${itemId}" onclick="toggleEditWeekNote('${itemId}')" class="text-[10px] text-stone-600 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-1.5 py-0.5 rounded shrink-0 font-medium">수정</button>
+                <div class="flex items-center gap-0.5 ml-1 shrink-0">
+                    <div class="flex flex-col">
+                        <button type="button" onclick="moveWeekNoteUp('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="위로">▲</button>
+                        <button type="button" onclick="moveWeekNoteDown('${itemId}')" class="text-[8px] text-stone-400 hover:text-stone-700 leading-none px-0.5" title="아래로">▼</button>
+                    </div>
+                    <button type="button" onclick="removeWeekNoteItem('${itemId}')" class="text-[10px] text-stone-400 hover:text-rose-500 px-1 font-bold ml-0.5" title="삭제">×</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function toggleEditWeekNote(itemId) {
+            const input = document.getElementById(`wn-text-${itemId}`);
+            const btn = document.getElementById(`wn-btn-${itemId}`);
+            if (!input || !btn) return;
+
+            if (input.disabled) {
+                input.disabled = false;
+                input.focus();
+                btn.innerText = '저장';
+                btn.className = 'text-[10px] text-white bg-stone-700 hover:bg-stone-800 px-1.5 py-0.5 rounded shrink-0 font-medium';
+            } else {
+                input.disabled = true;
+                btn.innerText = '수정';
+                btn.className = 'text-[10px] text-stone-600 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-1.5 py-0.5 rounded shrink-0 font-medium';
+                saveWeekNotesStorage();
+            }
+        }
+
+        function toggleWeekNoteCheckbox(weekKey) {
+            saveWeekNotesStorage();
+            loadWeekNotes();
+        }
+
+        function saveWeekNotesStorage() {
+            const weekKey = getWeekKey(currentDate);
+            const weekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
+            const container = document.getElementById('weekly-notes-container');
+            if (!container) return;
+
+            const rows = container.querySelectorAll('.group');
+            let newItems = [];
+            rows.forEach(row => {
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                const textInput = row.querySelector('input[type="text"]');
+                if (textInput) {
+                    const parts = textInput.id.split('-');
+                    const existingId = parts[parts.length - 1];
+                    newItems.push({
+                        id: Number(existingId),
+                        text: textInput.value,
+                        done: checkbox.checked
+                    });
+                }
+            });
+            weekNotes[weekKey] = newItems;
+            localStorage.setItem('sdm_week_notes', JSON.stringify(weekNotes));
+            saveDataToStorage();
+        }
+
+        function handleWeekNoteKeyDown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addWeekNoteItem();
+            }
+        }
+
+        function addWeekNoteItem() {
+            const inputField = document.getElementById('weekly-note-input');
+            if (!inputField) return;
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            const weekKey = getWeekKey(currentDate);
+            const weekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
+            
+            let items = weekNotes[weekKey];
+            if (!Array.isArray(items)) items = [];
+
+            items.push({ id: Date.now(), text: text, done: false });
+            weekNotes[weekKey] = items;
+
+            localStorage.setItem('sdm_week_notes', JSON.stringify(weekNotes));
+            saveDataToStorage();
+
+            inputField.value = '';
+            loadWeekNotes();
+            setTimeout(() => { const f = document.getElementById('weekly-note-input'); if(f) f.focus(); }, 50);
+        }
+
+        function removeWeekNoteItem(itemId) {
+            const weekKey = getWeekKey(currentDate);
+            const weekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
+            
+            let items = weekNotes[weekKey];
+            if (Array.isArray(items)) {
+                weekNotes[weekKey] = items.filter(i => String(i.id) !== String(itemId));
+                localStorage.setItem('sdm_week_notes', JSON.stringify(weekNotes));
+                saveDataToStorage();
+                loadWeekNotes();
+            }
+        }
+
+        function moveWeekNoteUp(itemId) {
+            const weekKey = getWeekKey(currentDate);
+            const weekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
+            let items = weekNotes[weekKey];
+            if (!Array.isArray(items)) return;
+
+            const idx = items.findIndex(i => String(i.id) === String(itemId));
+            if (idx <= 0) return;
+
+            const temp = items[idx];
+            items[idx] = items[idx - 1];
+            items[idx - 1] = temp;
+
+            weekNotes[weekKey] = items;
+            localStorage.setItem('sdm_week_notes', JSON.stringify(weekNotes));
+            saveDataToStorage();
+            loadWeekNotes();
+            setTimeout(() => { const el = document.getElementById(`wn-text-${itemId}`); if(el) el.focus(); }, 50);
+        }
+
+        function moveWeekNoteDown(itemId) {
+            const weekKey = getWeekKey(currentDate);
+            const weekNotes = JSON.parse(localStorage.getItem('sdm_week_notes') || '{}');
+            let items = weekNotes[weekKey];
+            if (!Array.isArray(items)) return;
+
+            const idx = items.findIndex(i => String(i.id) === String(itemId));
+            if (idx === -1 || idx >= items.length - 1) return;
+
+            const temp = items[idx];
+            items[idx] = items[idx + 1];
+            items[idx + 1] = temp;
+
+            weekNotes[weekKey] = items;
+            localStorage.setItem('sdm_week_notes', JSON.stringify(weekNotes));
+            saveDataToStorage();
+            loadWeekNotes();
+            setTimeout(() => { const el = document.getElementById(`wn-text-${itemId}`); if(el) el.focus(); }, 50);
+        }
+
         function loadMonthNotes() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
@@ -695,7 +880,6 @@
 
         function switchView(view) {
             currentView = view;
-            // 일간 뷰로 전환할 때 currentDate가 이미 지정되어 있다면 해당 날짜를 유지하도록 수정
 
             ['monthly', 'weekly', 'daily', 'minutes'].forEach(v => {
                 const btn = document.getElementById(`tab-${v}`);
@@ -724,6 +908,7 @@
             loadTodos();
             loadAllMonthValues();
             loadMonthNotes();
+            loadWeekNotes();
             updateWorkSummaryBadge();
         }
 
@@ -813,7 +998,7 @@
                         </div>
                         <div class="grid grid-cols-3 gap-1 pt-0.5">
                             <button type="button" onclick="openChefModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 휴가</button>
-                            <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-emerald-200 transition-all text-center">+ 특식</button>
+                            <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-stone-200 transition-all text-center">+ 특식</button>
                             <button type="button" onclick="openTagModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 근무</button>
                         </div>
                     </div>
@@ -950,11 +1135,25 @@
 
             const container = document.getElementById('view-container');
             if(container) container.innerHTML = `
-                <div class="w-full bg-white border-t border-l border-stone-200">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${topRowHTML}</div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${bottomRowHTML}<div class="min-h-[500px] border-r border-b border-stone-200 bg-white/50"></div></div>
+                <div class="w-full bg-white border-0 flex flex-col">
+                    <div class="p-4 bg-stone-50/90 border-b border-stone-200 shrink-0 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-stone-700 tracking-wide">📌 주간 핵심 메모 & 주요 일정</span>
+                        </div>
+                        <div id="weekly-notes-container" class="space-y-1.5"></div>
+                        <div class="flex gap-1.5 pt-1">
+                            <input type="text" id="weekly-note-input" onkeydown="handleWeekNoteKeyDown(event)" placeholder="주간 중요 메모 입력 후 엔터 또는 + 버튼..." class="w-full text-xs px-3 py-2 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700 placeholder:text-stone-400">
+                            <button type="button" onclick="addWeekNoteItem()" class="bg-stone-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-l border-stone-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${topRowHTML}</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">${bottomRowHTML}<div class="min-h-[500px] border-r border-b border-stone-200 bg-white/50"></div></div>
+                    </div>
                 </div>
             `;
+            loadWeekNotes();
         }
 
         function renderDaily() {
