@@ -695,7 +695,7 @@
 
         function switchView(view) {
             currentView = view;
-            if (view === 'daily') currentDate = new Date();
+            // 일간 뷰로 전환할 때 currentDate가 이미 지정되어 있다면 해당 날짜를 유지하도록 수정
 
             ['monthly', 'weekly', 'daily', 'minutes'].forEach(v => {
                 const btn = document.getElementById(`tab-${v}`);
@@ -902,7 +902,7 @@
                                 </div>
                                 <div class="grid grid-cols-3 gap-1">
                                     <button type="button" onclick="openChefModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 휴가</button>
-                                    <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-emerald-200 transition-all text-center">+ 특식</button>
+                                    <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-stone-200 transition-all text-center">+ 특식</button>
                                     <button type="button" onclick="openTagModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 근무</button>
                                 </div>
                             </div>
