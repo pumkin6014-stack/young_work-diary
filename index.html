@@ -319,6 +319,13 @@
         
         let isSummaryOpen = false;
 
+        function isTodayDate(year, month, day) {
+            const today = new Date();
+            return year === today.getFullYear() &&
+                   month === today.getMonth() &&
+                   day === today.getDate();
+        }
+
         function isKoreanHoliday(year, month, day) {
             const fixedHolidays = [
                 { m: 0, d: 1 },   // 신정
@@ -956,11 +963,7 @@
         }
 
         function createMonthlyCellHTML(year, month, day, dateKey, isCurrentMonth = true) {
-            const today = new Date();
-            const isToday = isCurrentMonth && 
-                            year === today.getFullYear() && 
-                            month === today.getMonth() && 
-                            day === today.getDate();
+            const isToday = isCurrentMonth && isTodayDate(year, month, day);
 
             const dayOfWeek = new Date(year, month, day).getDay();
             const isHoliday = isKoreanHoliday(year, month, day);
@@ -975,8 +978,8 @@
             let borderStyle = 'border border-stone-200';
             
             if (isToday) {
-                cellStyle = 'bg-stone-50/90 shadow-xs ring-1 ring-stone-400';
-                borderStyle = 'border-2 border-stone-500';
+                cellStyle = 'bg-amber-50/50 shadow-xs ring-1 ring-amber-400';
+                borderStyle = 'border-2 border-amber-500';
             }
 
             return `
@@ -984,8 +987,8 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-1.5">
-                                <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold ${isToday ? 'bg-stone-700 text-white px-1.5 py-0.5 rounded-md shadow-2xs' : dayColorClass} cursor-pointer shrink-0">${day}</span>
-                                ${isToday ? '<span class="text-[9px] font-extrabold px-1.5 py-0.2 bg-stone-200 text-stone-700 rounded tracking-wider">TODAY</span>' : ''}
+                                <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs font-bold ${isToday ? 'bg-stone-800 text-white px-1.5 py-0.5 rounded-md shadow-2xs' : dayColorClass} cursor-pointer shrink-0">${day}</span>
+                                ${isToday ? '<span class="text-[9px] font-extrabold px-1.5 py-0.5 bg-amber-200/90 text-amber-900 rounded tracking-wider">TODAY</span>' : ''}
                             </div>
                             <div class="flex flex-wrap gap-1 items-center justify-end overflow-hidden max-h-[45px]" id="tags-box-${dateKey}"></div>
                         </div>
@@ -998,7 +1001,7 @@
                         </div>
                         <div class="grid grid-cols-3 gap-1 pt-0.5">
                             <button type="button" onclick="openChefModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 휴가</button>
-                            <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-stone-200 transition-all text-center">+ 특식</button>
+                            <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-emerald-200 transition-all text-center">+ 특식</button>
                             <button type="button" onclick="openTagModal('${dateKey}')" class="text-[10px] py-0.5 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 근무</button>
                         </div>
                     </div>
@@ -1065,15 +1068,34 @@
             switchView('daily');
         }
 
-        function createWeeklyCellHTML(dayTitle, dateKey, year, month, day, isHolidayOrSun = false) {
-            let titleColorClass = 'text-stone-800';
-            if (isHolidayOrSun) titleColorClass = 'text-rose-600 font-bold';
+        function createWeeklyCellHTML(dayLabel, dayNum, dateKey, year, month, day, isHolidayOrSun = false, isSat = false) {
+            const isToday = isTodayDate(year, month, day);
+
+            let labelColorClass = 'text-stone-800';
+            if (isHolidayOrSun) labelColorClass = 'text-rose-600 font-bold';
+            else if (isSat) labelColorClass = 'text-blue-600 font-bold';
+
+            const cardStyle = isToday
+                ? 'bg-amber-50/45 ring-2 ring-inset ring-amber-400 shadow-xs'
+                : 'bg-white';
+
+            const headerBorderStyle = isToday
+                ? 'border-amber-200/90'
+                : 'border-stone-200';
+
+            const dateBadgeHTML = isToday
+                ? `<span onclick="goToDaily(${year}, ${month}, ${day})" class="inline-flex items-center gap-1.5 text-sm font-bold cursor-pointer hover:opacity-85 shrink-0">
+                       <span class="${labelColorClass}">${dayLabel}</span>
+                       <span class="bg-stone-800 text-white px-2 py-0.5 rounded-md text-xs font-extrabold shadow-2xs">${dayNum}</span>
+                       <span class="text-[9px] font-extrabold px-1.5 py-0.5 bg-amber-200/90 text-amber-900 rounded tracking-wider">TODAY</span>
+                   </span>`
+                : `<span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold ${labelColorClass} cursor-pointer hover:opacity-85 shrink-0">${dayLabel} ${dayNum}</span>`;
 
             return `
-                <div class="p-5 flex flex-col justify-between min-h-[500px] border-r border-b border-stone-200 bg-white" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
+                <div class="p-5 flex flex-col justify-between min-h-[500px] border-r border-b border-stone-200 ${cardStyle} transition-colors" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
                     <div>
-                        <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-stone-200">
-                            <span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold ${titleColorClass} cursor-pointer hover:opacity-85 shrink-0">${dayTitle}</span>
+                        <div class="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b ${headerBorderStyle}">
+                            ${dateBadgeHTML}
                             <div class="flex flex-wrap gap-1 items-center justify-end" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
@@ -1099,7 +1121,7 @@
                             <textarea id="memo-${dateKey}" disabled class="w-full flex-1 min-h-[90px] text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
                         </div>
                     </div>
-                    <div class="text-right pt-2.5 border-t border-stone-200 shrink-0">
+                    <div class="text-right pt-2.5 border-t ${headerBorderStyle} shrink-0">
                         <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs text-stone-600 font-semibold hover:underline">상세 기록 →</button>
                     </div>
                 </div>
@@ -1117,7 +1139,7 @@
             const titleEl = document.getElementById('current-date-title');
             if (titleEl) titleEl.innerText = `${firstday.getMonth()+1}월 ${firstday.getDate()}일 ~ ${lastday.getMonth()+1}월 ${lastday.getDate()}일`;
 
-            const daysName = ['월요일', '화요일', '수요일', '목요일', '금요일', '<span class="text-blue-600">토요일</span>', '<span class="text-rose-600">일요일</span>'];
+            const daysPlain = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
             let topRowHTML = '', bottomRowHTML = '';
 
             for (let i = 0; i < 7; i++) {
@@ -1127,8 +1149,9 @@
                 
                 const isHol = isKoreanHoliday(d.getFullYear(), d.getMonth(), d.getDate());
                 const isSun = (i === 6);
+                const isSat = (i === 5);
                 
-                const cell = createWeeklyCellHTML(`${daysName[i]} ${d.getDate()}`, dateKey, d.getFullYear(), d.getMonth(), d.getDate(), isHol || isSun);
+                const cell = createWeeklyCellHTML(daysPlain[i], d.getDate(), dateKey, d.getFullYear(), d.getMonth(), d.getDate(), isHol || isSun, isSat);
                 if (i < 4) topRowHTML += cell;
                 else bottomRowHTML += cell;
             }
@@ -1162,6 +1185,7 @@
             const dayOfWeek = currentDate.getDay();
             const isHol = isKoreanHoliday(year, month - 1, day);
             const dayName = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeek];
+            const isToday = isTodayDate(year, month - 1, day);
 
             const titleEl = document.getElementById('current-date-title');
             if (titleEl) titleEl.innerText = `${year}년 ${month}월 ${day}일 (${dayName})`;
@@ -1174,8 +1198,10 @@
             if(container) container.innerHTML = `
                 <div class="w-full p-8 space-y-6 bg-white min-h-[600px] flex flex-col" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
                     <div class="border-b border-stone-200 pb-4 flex justify-between items-center shrink-0">
-                        <div class="flex items-center gap-4">
-                            <h2 class="text-xl font-bold ${dayTitleColor}">${month}월 ${day}일 ${dayName}요일 ${isHol ? '<span class="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full ml-1">공휴일</span>' : ''}</h2>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <h2 class="text-xl font-bold ${dayTitleColor}">${month}월 ${day}일 ${dayName}요일</h2>
+                            ${isToday ? '<span class="text-[10px] font-extrabold px-2 py-0.5 bg-amber-200/90 text-amber-900 rounded tracking-wider">TODAY</span>' : ''}
+                            ${isHol ? '<span class="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">공휴일</span>' : ''}
                             <div class="flex flex-wrap gap-1.5" id="tags-box-${dateKey}"></div>
                         </div>
                         <div class="flex items-center gap-2">
