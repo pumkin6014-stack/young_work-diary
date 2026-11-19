@@ -1112,9 +1112,9 @@
                         </div>
                     </div>
 
-                    <div class="flex-1 flex flex-col justify-between gap-3 min-h-0">
-                        <div class="flex-1 flex flex-col justify-between bg-stone-50/60 border border-stone-200/80 rounded-xl p-2.5 min-h-[245px]">
-                            <div class="space-y-1.5 mb-2 flex-1 max-h-[210px] overflow-y-auto pr-0.5 todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
+                    <div class="flex-1 flex flex-col justify-between gap-2.5 min-h-0">
+                        <div class="flex-1 flex flex-col justify-between bg-stone-50/60 border border-stone-200/80 rounded-xl p-2.5 min-h-[270px]">
+                            <div class="space-y-1.5 mb-2 flex-1 max-h-[235px] overflow-y-auto pr-0.5 todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
                             <div class="space-y-1.5 shrink-0 pt-1 border-t border-stone-200/70">
                                 <div class="flex gap-1">
                                     <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3 py-1.5 bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
@@ -1128,9 +1128,8 @@
                             </div>
                         </div>
 
-                        <div class="notebook-zone-compact p-2 rounded-lg border border-stone-200/70 flex flex-col relative shrink-0 h-[84px]">
-                            <div class="flex justify-between items-center pb-0.5">
-                                <span class="text-[10px] font-semibold text-stone-400">메모</span>
+                        <div class="notebook-zone-compact px-2.5 py-1.5 rounded-lg border border-stone-200/70 flex flex-col relative shrink-0 h-[66px]">
+                            <div class="flex justify-end items-center pb-0.5">
                                 <button type="button" id="memo-btn-${dateKey}" onclick="toggleEditMemo('${dateKey}')" class="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded font-semibold hover:bg-stone-200 transition-all">수정</button>
                             </div>
                             <textarea id="memo-${dateKey}" disabled class="w-full flex-1 text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea-compact"></textarea>
@@ -1236,8 +1235,7 @@
                         </div>
                     </div>
                     <div class="flex-1 flex flex-col space-y-2 pt-2">
-                        <div class="flex justify-between items-center shrink-0">
-                            <div class="text-xs font-bold text-stone-500">일일 메모</div>
+                        <div class="flex justify-end items-center shrink-0">
                             <button type="button" id="memo-btn-${dateKey}" onclick="toggleEditMemo('${dateKey}')" class="text-xs px-3 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg font-bold hover:bg-stone-200 transition-all">수정</button>
                         </div>
                         <div class="flex-1 notebook-zone p-0">
