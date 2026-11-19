@@ -104,9 +104,21 @@
             background-image: linear-gradient(to bottom, #f1f0eb 1px, transparent 1px);
             background-size: 100% 30px;
         }
+        .notebook-zone-compact {
+            background-color: #ffffff;
+            background-image: linear-gradient(to bottom, #f1f0eb 1px, transparent 1px);
+            background-size: 100% 24px;
+        }
         .notebook-textarea {
             font-size: 13px !important;
             line-height: 30px !important;
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+            background-image: none !important;
+        }
+        .notebook-textarea-compact {
+            font-size: 12px !important;
+            line-height: 24px !important;
             padding-top: 0px !important;
             padding-bottom: 0px !important;
             background-image: none !important;
@@ -1092,36 +1104,40 @@
                 : `<span onclick="goToDaily(${year}, ${month}, ${day})" class="text-sm font-bold ${labelColorClass} cursor-pointer hover:opacity-85 shrink-0">${dayLabel} ${dayNum}</span>`;
 
             return `
-                <div class="p-5 flex flex-col justify-between min-h-[500px] border-r border-b border-stone-200 ${cardStyle} transition-colors" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
-                    <div>
-                        <div class="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b ${headerBorderStyle}">
+                <div class="p-4 flex flex-col justify-between min-h-[500px] border-r border-b border-stone-200 ${cardStyle} transition-colors" oncontextmenu="openDateContextMenu(event, '${dateKey}')">
+                    <div class="shrink-0">
+                        <div class="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b ${headerBorderStyle}">
                             ${dateBadgeHTML}
                             <div class="flex flex-wrap gap-1 items-center justify-end" id="tags-box-${dateKey}"></div>
                         </div>
                     </div>
-                    <div class="flex-1 flex flex-col justify-between space-y-3 my-1">
-                        <div>
-                            <div class="space-y-1.5 mb-2 max-h-[120px] overflow-y-auto todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
-                            <div class="space-y-1.5">
+
+                    <div class="flex-1 flex flex-col justify-between gap-3 min-h-0">
+                        <div class="flex-1 flex flex-col justify-between bg-stone-50/60 border border-stone-200/80 rounded-xl p-2.5 min-h-[245px]">
+                            <div class="space-y-1.5 mb-2 flex-1 max-h-[210px] overflow-y-auto pr-0.5 todo-dropzone" ondragover="allowDrop(event)" ondrop="dropTodo(event, '${dateKey}')" id="todo-box-${dateKey}"></div>
+                            <div class="space-y-1.5 shrink-0 pt-1 border-t border-stone-200/70">
                                 <div class="flex gap-1">
-                                    <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3.5 py-2 bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
-                                    <button type="button" onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-2 rounded-lg text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
+                                    <input type="text" id="input-${dateKey}" onkeydown="handleKeyDown(event, '${dateKey}')" placeholder="할 일 입력" class="w-full text-xs px-3 py-1.5 bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 text-stone-700">
+                                    <button type="button" onclick="addTodoItem('${dateKey}')" class="bg-stone-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 hover:bg-stone-700 transition-all">+</button>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1">
                                     <button type="button" onclick="openChefModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 휴가</button>
-                                    <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-stone-200 transition-all text-center">+ 특식</button>
+                                    <button type="button" onclick="openSpecialMealModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-emerald-200 transition-all text-center">+ 특식</button>
                                     <button type="button" onclick="openTagModal('${dateKey}')" class="text-[10px] py-1 rounded-md bg-stone-100 text-stone-700 hover:bg-stone-200 font-semibold border border-stone-200 transition-all text-center">+ 근무</button>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex-1 notebook-zone p-0 flex flex-col relative">
-                            <div class="flex justify-end pb-1 pr-1">
-                                <button type="button" id="memo-btn-${dateKey}" onclick="toggleEditMemo('${dateKey}')" class="text-[10px] px-2 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded font-semibold hover:bg-stone-200 transition-all">수정</button>
+
+                        <div class="notebook-zone-compact p-2 rounded-lg border border-stone-200/70 flex flex-col relative shrink-0 h-[84px]">
+                            <div class="flex justify-between items-center pb-0.5">
+                                <span class="text-[10px] font-semibold text-stone-400">메모</span>
+                                <button type="button" id="memo-btn-${dateKey}" onclick="toggleEditMemo('${dateKey}')" class="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded font-semibold hover:bg-stone-200 transition-all">수정</button>
                             </div>
-                            <textarea id="memo-${dateKey}" disabled class="w-full flex-1 min-h-[90px] text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea"></textarea>
+                            <textarea id="memo-${dateKey}" disabled class="w-full flex-1 text-xs p-0 bg-transparent border-0 rounded-none focus:outline-none resize-none notebook-textarea-compact"></textarea>
                         </div>
                     </div>
-                    <div class="text-right pt-2.5 border-t ${headerBorderStyle} shrink-0">
+
+                    <div class="text-right pt-2 mt-2.5 border-t ${headerBorderStyle} shrink-0">
                         <button onclick="goToDaily(${year}, ${month}, ${day})" class="text-xs text-stone-600 font-semibold hover:underline">상세 기록 →</button>
                     </div>
                 </div>
@@ -1596,7 +1612,7 @@
                     else if (item.type === 'notice') bgClass = 'bg-emerald-100 text-emerald-900 border-emerald-200 font-semibold';
 
                     const itemDiv = document.createElement('div');
-                    itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1 rounded border ${bgClass} todo-item`;
+                    itemDiv.className = `flex items-center justify-between text-[11px] px-2 py-1.5 rounded border ${bgClass} todo-item`;
                     itemDiv.draggable = true;
                     itemDiv.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', JSON.stringify({ dateKey, id: item.id })));
                     
@@ -1616,7 +1632,7 @@
 
                     itemDiv.innerHTML = `
                         <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleTodo('${dateKey}', ${item.id})" class="w-3.5 h-3.5 accent-stone-600 rounded cursor-pointer shrink-0 mr-1.5">
-                        <input type="text" id="todo-text-${dateKey}-${item.id}" value="${item.text}" disabled class="w-full bg-transparent border-0 p-0 text-[11px] focus:outline-none ${item.done ? 'line-through opacity-40' : ''}">
+                        <input type="text" id="todo-text-${dateKey}-${item.id}" value="${item.text}" disabled title="${item.text}" class="w-full bg-transparent border-0 p-0 text-[11px] focus:outline-none ${item.done ? 'line-through opacity-40' : ''}">
                         <div class="flex items-center gap-1 ml-1 shrink-0">
                             <button type="button" id="todo-edit-btn-${dateKey}-${item.id}" onclick="toggleEditTodo('${dateKey}', ${item.id})" class="text-[10px] text-stone-600 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-1 py-0.5 rounded font-medium shrink-0">수정</button>
                             <div class="flex flex-col">
